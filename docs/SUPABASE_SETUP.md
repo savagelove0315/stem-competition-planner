@@ -1,6 +1,6 @@
 # Supabase Setup
 
-Phase 3A adds only the connection foundation for Supabase. It does not add Auth, RLS policies, CRUD UI, dashboard logic, or competition-specific behavior.
+The Supabase foundation covers connection setup, email/password Auth, protected routes, and a temporary RLS baseline for authenticated users. It does not add CRUD UI, dashboard logic, sample data, role-based permissions, or competition-specific behavior.
 
 ## Environment Variables
 
@@ -51,10 +51,11 @@ Implemented in this phase:
 - Email/password login foundation.
 - Protected app routes with `/login` left public.
 - Logout from the app shell.
+- Temporary authenticated-only RLS policies for app tables.
 
 Not implemented in this phase:
 
-- RLS policies.
+- Role-based RLS permissions.
 - Service role usage.
 - CRUD UI.
 - Dashboard data logic.
@@ -85,4 +86,21 @@ http://localhost:3000/login
 
 Sign in with the user email and password. App routes redirect unauthenticated users to `/login`; `/login` redirects signed-in users to `/dashboard`.
 
-RLS policies are intentionally deferred to the next phase after Auth has been verified.
+## RLS Baseline
+
+The migration `supabase/migrations/002_enable_rls_and_basic_policies.sql` enables RLS on all current app tables:
+
+- `competitions`
+- `students`
+- `student_competitions`
+- `activities`
+- `activity_participants`
+- `teams`
+- `team_members`
+- `teachers`
+- `conflict_records`
+- `app_settings`
+
+For early development, every authenticated user can select, insert, update, and delete rows in these tables. Anonymous users receive no policies and no table grants.
+
+This is a temporary baseline so upcoming CRUD work is not publicly exposed. A later phase must replace it with organization, role, and ownership rules before production use.

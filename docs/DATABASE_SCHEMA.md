@@ -263,12 +263,23 @@ The migration defines a shared `public.set_updated_at()` trigger function and at
 
 ## RLS/Auth
 
-RLS and authentication policies are intentionally not implemented in this phase.
+The initial schema migration creates the tables only. The follow-up migration:
 
-Before exposing these tables to users, a later phase should define:
+```text
+supabase/migrations/002_enable_rls_and_basic_policies.sql
+```
 
-- Authentication provider setup.
+enables row-level security on all current app tables and adds a temporary authenticated-only CRUD policy baseline.
+
+Current behavior:
+
+- Authenticated users can select, insert, update, and delete app table rows.
+- Anonymous users do not receive public access policies.
+- No organization scoping, ownership checks, or role-based permissions are implemented yet.
+
+This is intentionally broad for early development. Before production use, a later phase should define:
+
 - User and role model.
 - Organization or school scoping if needed.
-- Row-level security policies for each table.
+- Row ownership or membership checks.
 - Permission rules for conflict resolution and settings updates.
