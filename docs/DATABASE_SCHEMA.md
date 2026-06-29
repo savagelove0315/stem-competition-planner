@@ -4,7 +4,7 @@ This document describes the Phase 2 database foundation for the STEM Competition
 
 Scratch, Robotics, or any other competition names may appear later as seed/demo data only. They are not represented as tables, enum values, routes, or logic branches.
 
-## Migration
+## Migrations
 
 The initial schema lives in:
 
@@ -12,7 +12,14 @@ The initial schema lives in:
 supabase/migrations/001_initial_schema.sql
 ```
 
-This phase does not connect Supabase, install a client library, or enable real CRUD workflows.
+Follow-up migrations:
+
+```text
+supabase/migrations/002_enable_rls_and_basic_policies.sql
+supabase/migrations/003_add_competition_metadata.sql
+```
+
+Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
 
 ## Tables
 
@@ -24,6 +31,10 @@ Key columns:
 
 - `id uuid primary key`
 - `name text`
+- `short_name text`
+- `color text`
+- `icon text`
+- `category text`
 - `description text`
 - `status text`
 - `starts_at timestamptz`
@@ -34,6 +45,13 @@ Key columns:
 - `notes text`
 - `created_at timestamptz`
 - `updated_at timestamptz`
+
+Metadata columns:
+
+- `short_name` is an optional compact label for badges, filters, calendar bars, reports, and dense tables.
+- `color` is a required hex color with default `#2563eb` for timeline bars, dashboard cards, badges, and reports.
+- `icon` is an optional icon token or label stored as data for future generic UI rendering.
+- `category` is an optional grouping label for filtering, reporting, and organizing competitions.
 
 Status values:
 
@@ -249,7 +267,7 @@ Competition-specific configuration should stay tied to competition data when add
 
 The migration adds indexes for common filters and conflict checks:
 
-- Competition status, teacher, and date range lookups.
+- Competition status, teacher, category, and date range lookups.
 - Student status, name, and grade lookups.
 - Student-to-competition lookups in both directions.
 - Activity competition and schedule-time lookups.

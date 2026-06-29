@@ -6,6 +6,10 @@ import type { Competition, CompetitionStatus } from "@/types/database";
 type CompetitionRow = {
   id: string;
   name: string;
+  short_name: string | null;
+  color: string;
+  icon: string | null;
+  category: string | null;
   description: string | null;
   status: CompetitionStatus;
   starts_at: string | null;
@@ -22,6 +26,10 @@ function mapCompetition(row: CompetitionRow): Competition {
   return {
     id: row.id,
     name: row.name,
+    shortName: row.short_name,
+    color: row.color,
+    icon: row.icon,
+    category: row.category,
     description: row.description,
     status: row.status,
     startsAt: row.starts_at,
@@ -43,6 +51,10 @@ export async function listCompetitions(): Promise<Competition[]> {
       [
         "id",
         "name",
+        "short_name",
+        "color",
+        "icon",
+        "category",
         "description",
         "status",
         "starts_at",

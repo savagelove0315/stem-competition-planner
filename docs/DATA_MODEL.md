@@ -38,6 +38,17 @@ teams
   -> conflict_records
 ```
 
+## Competition Metadata
+
+Competitions include generic metadata for display and organization:
+
+- `short_name` for compact labels in badges, filters, timeline bars, and reports.
+- `color` for visual treatment in schedule and dashboard surfaces.
+- `icon` for a future UI icon token or label.
+- `category` for grouping, filtering, and reporting.
+
+These values are stored on `competitions` because they describe a competition record. They must remain configurable data and must not become route names, enum values, permissions, or branching logic.
+
 ## Competition Participation
 
 Students do not have competition-specific columns.

@@ -36,6 +36,10 @@ export type Teacher = {
 export type Competition = {
   id: UUID;
   name: string;
+  shortName: string | null;
+  color: string;
+  icon: string | null;
+  category: string | null;
   description: string | null;
   status: CompetitionStatus;
   startsAt: Timestamp | null;

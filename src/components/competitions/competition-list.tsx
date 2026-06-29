@@ -30,8 +30,8 @@ const statusStyles: Record<CompetitionStatus, string> = {
   archived: "border-border bg-background text-muted-foreground",
 };
 
-function SchemaUnavailable() {
-  return <span className="text-muted-foreground">Not in schema</span>;
+function EmptyMetadata() {
+  return <span className="text-muted-foreground">Not set</span>;
 }
 
 function ArchiveSubmitButton({ disabled }: { disabled: boolean }) {
@@ -112,16 +112,23 @@ export function CompetitionList({ competitions }: CompetitionListProps) {
                     ) : null}
                   </td>
                   <td className="px-4 py-4">
-                    <SchemaUnavailable />
+                    {competition.shortName ? competition.shortName : <EmptyMetadata />}
                   </td>
                   <td className="px-4 py-4">
-                    <SchemaUnavailable />
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-4 rounded border"
+                        style={{ backgroundColor: competition.color }}
+                        aria-hidden="true"
+                      />
+                      <span className="font-mono text-xs">{competition.color}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-4">
-                    <SchemaUnavailable />
+                    {competition.icon ? competition.icon : <EmptyMetadata />}
                   </td>
                   <td className="px-4 py-4">
-                    <SchemaUnavailable />
+                    {competition.category ? competition.category : <EmptyMetadata />}
                   </td>
                   <td className="px-4 py-4">
                     <span

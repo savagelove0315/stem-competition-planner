@@ -29,6 +29,10 @@ function getFormValue(formData: FormData, key: keyof CompetitionFormValues): str
 function readCompetitionForm(formData: FormData) {
   return competitionFormSchema.safeParse({
     name: getFormValue(formData, "name"),
+    shortName: getFormValue(formData, "shortName"),
+    color: getFormValue(formData, "color"),
+    icon: getFormValue(formData, "icon"),
+    category: getFormValue(formData, "category"),
     description: getFormValue(formData, "description"),
     status: getFormValue(formData, "status"),
     startsAt: getFormValue(formData, "startsAt"),
@@ -56,6 +60,10 @@ async function requireAuthenticatedClient() {
 function toCompetitionPayload(values: CompetitionFormValues) {
   return {
     name: values.name,
+    short_name: values.shortName,
+    color: values.color,
+    icon: values.icon,
+    category: values.category,
     description: values.description,
     status: values.status,
     starts_at: values.startsAt,

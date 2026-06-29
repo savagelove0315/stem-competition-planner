@@ -109,6 +109,19 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={`${mode}-shortName`}>
+            Short name
+          </label>
+          <input
+            id={`${mode}-shortName`}
+            name="shortName"
+            defaultValue={competition?.shortName ?? ""}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.shortName} />
+        </div>
+
+        <div className="grid gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-status`}>
             Status
           </label>
@@ -125,6 +138,60 @@ export function CompetitionForm({
             ))}
           </select>
           <FieldError errors={state.fieldErrors?.status} />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={`${mode}-color`}>
+            Color
+          </label>
+          <div className="flex gap-2">
+            <input
+              aria-label="Competition color picker"
+              type="color"
+              defaultValue={competition?.color ?? "#2563eb"}
+              className="h-10 w-12 rounded-md border border-input bg-background p-1"
+              onChange={(event) => {
+                const textInput = event.currentTarget.nextElementSibling;
+                if (textInput instanceof HTMLInputElement) {
+                  textInput.value = event.currentTarget.value;
+                }
+              }}
+            />
+            <input
+              id={`${mode}-color`}
+              name="color"
+              defaultValue={competition?.color ?? "#2563eb"}
+              className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+          <FieldError errors={state.fieldErrors?.color} />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={`${mode}-icon`}>
+            Icon
+          </label>
+          <input
+            id={`${mode}-icon`}
+            name="icon"
+            defaultValue={competition?.icon ?? ""}
+            placeholder="Optional icon token"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.icon} />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={`${mode}-category`}>
+            Category
+          </label>
+          <input
+            id={`${mode}-category`}
+            name="category"
+            defaultValue={competition?.category ?? ""}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.category} />
         </div>
 
         <div className="grid gap-2">
