@@ -1,0 +1,65 @@
+import "server-only";
+
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Competition, CompetitionStatus } from "@/types/database";
+
+type CompetitionRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: CompetitionStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+  registration_opens_at: string | null;
+  registration_closes_at: string | null;
+  lead_teacher_id: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function mapCompetition(row: CompetitionRow): Competition {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    status: row.status,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    registrationOpensAt: row.registration_opens_at,
+    registrationClosesAt: row.registration_closes_at,
+    leadTeacherId: row.lead_teacher_id,
+    notes: row.notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function listCompetitions(): Promise<Competition[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("competitions")
+    .select(
+      [
+        "id",
+        "name",
+        "description",
+        "status",
+        "starts_at",
+        "ends_at",
+        "registration_opens_at",
+        "registration_closes_at",
+        "lead_teacher_id",
+        "notes",
+        "created_at",
+        "updated_at",
+      ].join(","),
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Unable to load competitions: ${error.message}`);
+  }
+
+  return ((data ?? []) as unknown as CompetitionRow[]).map(mapCompetition);
+}
