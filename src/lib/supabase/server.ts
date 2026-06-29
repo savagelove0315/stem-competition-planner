@@ -1,15 +1,27 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getSupabasePublicEnv } from "./env";
 
-export function createSupabaseServerClient(): SupabaseClient {
+export async function createSupabaseServerClient(): Promise<SupabaseClient> {
   const { url, anonKey } = getSupabasePublicEnv();
+  const cookieStore = await cookies();
 
-  return createClient(url, anonKey, {
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Server Components cannot set cookies; middleware handles session refresh.
+        }
+      },
     },
   });
 }

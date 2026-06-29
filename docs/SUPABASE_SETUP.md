@@ -48,12 +48,41 @@ Implemented in this phase:
 - Typed environment validation helper.
 - Browser and server Supabase client factories.
 - Table-free connection health check.
+- Email/password login foundation.
+- Protected app routes with `/login` left public.
+- Logout from the app shell.
 
 Not implemented in this phase:
 
-- Supabase Auth.
 - RLS policies.
 - Service role usage.
 - CRUD UI.
 - Dashboard data logic.
 - Competition-specific hardcoded behavior.
+
+## Creating The First Auth User
+
+Use the Supabase dashboard to create the first user:
+
+1. Open the Supabase project dashboard.
+2. Go to **Authentication**.
+3. Open **Users**.
+4. Choose **Add user**.
+5. Enter an email address and password.
+6. Confirm the user if your project requires email confirmation.
+
+Then start the app:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000/login
+```
+
+Sign in with the user email and password. App routes redirect unauthenticated users to `/login`; `/login` redirects signed-in users to `/dashboard`.
+
+RLS policies are intentionally deferred to the next phase after Auth has been verified.

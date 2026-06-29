@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { navigationItems } from "@/components/layout/navigation";
 
@@ -28,6 +29,7 @@ export function TopHeader() {
         <Button asChild size="sm">
           <Link href="/competitions">New Competition</Link>
         </Button>
+        <LogoutButton />
       </div>
     </header>
   );
