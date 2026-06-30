@@ -4,6 +4,7 @@ import type {
 import type {
   NoticeCompetition,
   NoticeCompetitionAssignment,
+  NoticeStudentFilters,
   NoticeStudent,
 } from "./types";
 
@@ -43,6 +44,43 @@ export function formatNoticePeriod(competition: NoticeCompetition) {
 
 export function formatNoticeField(value: string | null) {
   return value?.trim() || EMPTY_NOTICE_VALUE;
+}
+
+export function filterNoticeStudents(
+  students: NoticeStudent[],
+  filters: NoticeStudentFilters,
+) {
+  return students.filter((student) => {
+    if (filters.className && student.className !== filters.className) {
+      return false;
+    }
+
+    if (filters.gradeLevel && student.gradeLevel !== filters.gradeLevel) {
+      return false;
+    }
+
+    if (
+      filters.competitionId &&
+      !student.competitionAssignments.some(
+        (assignment) => assignment.competition.id === filters.competitionId,
+      )
+    ) {
+      return false;
+    }
+
+    if (filters.onlyWithCompetitions && student.competitionAssignments.length === 0) {
+      return false;
+    }
+
+    if (
+      filters.onlyMultiCompetition &&
+      student.competitionAssignments.length < 2
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 export function buildNoticeText(

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { BulkNoticeGenerator } from "@/components/notices/bulk-notice-generator";
 import { NoticeActions } from "@/components/notices/notice-actions";
 import { NoticeStudentSelector } from "@/components/notices/notice-student-selector";
 import { ParentNoticePreview } from "@/components/notices/parent-notice-preview";
@@ -14,10 +15,13 @@ type ParentNoticeGeneratorProps = {
   settings: NoticeSettings;
 };
 
+type NoticeMode = "single" | "bulk";
+
 export function ParentNoticeGenerator({
   students,
   settings,
 }: ParentNoticeGeneratorProps) {
+  const [mode, setMode] = useState<NoticeMode>("single");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const selectedStudent = useMemo(
     () => students.find((student) => student.id === selectedStudentId) ?? null,
@@ -30,21 +34,57 @@ export function ParentNoticeGenerator({
   const hasPrintableNotice = selectedStudent !== null && assignments.length > 0;
 
   return (
-    <div className="grid min-w-0 gap-6 xl:grid-cols-[0.35fr_0.65fr]">
-      <div className="flex min-w-0 flex-col gap-4">
-        <NoticeStudentSelector
-          students={students}
-          selectedStudentId={selectedStudentId}
-          onSelectedStudentIdChange={setSelectedStudentId}
-        />
-        <NoticeActions noticeText={noticeText} disabled={!hasPrintableNotice} />
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="notice-print-hidden flex flex-wrap gap-2 rounded-lg border bg-card p-2 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setMode("single")}
+          className={
+            mode === "single"
+              ? "inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
+              : "inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          }
+        >
+          Single Student Notice
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("bulk")}
+          className={
+            mode === "bulk"
+              ? "inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground"
+              : "inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          }
+        >
+          Bulk Notices
+        </button>
       </div>
 
-      <ParentNoticePreview
-        student={selectedStudent}
-        assignments={assignments}
-        settings={settings}
-      />
+      {mode === "single" ? (
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[0.35fr_0.65fr]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <NoticeStudentSelector
+              students={students}
+              selectedStudentId={selectedStudentId}
+              onSelectedStudentIdChange={setSelectedStudentId}
+            />
+            <NoticeActions
+              noticeText={noticeText}
+              disabled={!hasPrintableNotice}
+            />
+          </div>
+
+          <div className="notice-print-scope">
+            <ParentNoticePreview
+              student={selectedStudent}
+              assignments={assignments}
+              settings={settings}
+            />
+          </div>
+        </div>
+      ) : (
+        <BulkNoticeGenerator students={students} settings={settings} />
+      )}
     </div>
   );
 }

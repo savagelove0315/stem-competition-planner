@@ -8,7 +8,7 @@ export default async function NoticesPage() {
 
   const [students, settings] = await Promise.all([
     listNoticeStudents(),
-    getNoticeSettings(),
+    getNoticeSettings({ fallbackOnError: true }),
   ]);
 
   return (

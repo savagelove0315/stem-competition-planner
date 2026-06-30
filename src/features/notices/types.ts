@@ -27,6 +27,14 @@ export type NoticeStudent = {
   competitionAssignments: NoticeCompetitionAssignment[];
 };
 
+export type NoticeStudentFilters = {
+  className: string;
+  gradeLevel: string;
+  competitionId: string;
+  onlyWithCompetitions: boolean;
+  onlyMultiCompetition: boolean;
+};
+
 export type NoticeCompetitionRow = {
   id: string;
   name: string;

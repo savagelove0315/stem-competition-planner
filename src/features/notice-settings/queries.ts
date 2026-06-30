@@ -9,6 +9,10 @@ import {
 } from "./schemas";
 import type { NoticeSettings } from "./types";
 
+type GetNoticeSettingsOptions = {
+  fallbackOnError?: boolean;
+};
+
 function parseNoticeSettings(value: unknown): NoticeSettings {
   const parsed = noticeSettingsSchema.safeParse({
     ...defaultNoticeSettings,
@@ -18,7 +22,9 @@ function parseNoticeSettings(value: unknown): NoticeSettings {
   return parsed.success ? parsed.data : defaultNoticeSettings;
 }
 
-export async function getNoticeSettings(): Promise<NoticeSettings> {
+export async function getNoticeSettings(
+  options: GetNoticeSettingsOptions = {},
+): Promise<NoticeSettings> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("app_settings")
@@ -27,6 +33,10 @@ export async function getNoticeSettings(): Promise<NoticeSettings> {
     .maybeSingle();
 
   if (error) {
+    if (options.fallbackOnError) {
+      return defaultNoticeSettings;
+    }
+
     throw new Error(`Unable to load notice settings: ${error.message}`);
   }
 
