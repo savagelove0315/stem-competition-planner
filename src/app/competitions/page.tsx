@@ -1,12 +1,20 @@
 import { CompetitionForm } from "@/components/competitions/competition-form";
 import { CompetitionList } from "@/components/competitions/competition-list";
+import {
+  listCompetitionEnrollments,
+  listCompetitionEnrollmentStudentOptions,
+} from "@/features/competition-enrollments/queries";
 import { listCompetitions } from "@/features/competitions/queries";
 
 export default async function CompetitionsPage() {
-  const competitions = await listCompetitions();
+  const [competitions, enrollments, studentOptions] = await Promise.all([
+    listCompetitions(),
+    listCompetitionEnrollments(),
+    listCompetitionEnrollmentStudentOptions(),
+  ]);
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6">
       <div className="rounded-lg border bg-card p-6 shadow-sm">
         <div className="max-w-3xl">
           <p className="text-sm font-medium text-primary">Settings</p>
@@ -22,7 +30,11 @@ export default async function CompetitionsPage() {
       </div>
 
       <CompetitionForm mode="create" />
-      <CompetitionList competitions={competitions} />
+      <CompetitionList
+        competitions={competitions}
+        enrollments={enrollments}
+        studentOptions={studentOptions}
+      />
     </section>
   );
 }
