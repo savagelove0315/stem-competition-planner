@@ -98,6 +98,7 @@ export type ConflictViewModel = {
     totalConflicts: number;
     seriousConflicts: number;
     mildConflicts: number;
+    warningConflicts: number;
     studentsAffected: number;
     highRiskDates: number;
   };

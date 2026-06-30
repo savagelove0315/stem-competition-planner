@@ -198,6 +198,9 @@ export function buildConflictViewModel({
       mildConflicts: filteredConflicts.filter(
         (conflict) => conflict.severity === "mild",
       ).length,
+      warningConflicts: filteredConflicts.filter(
+        (conflict) => conflict.severity === "warning",
+      ).length,
       studentsAffected: new Set(
         filteredConflicts.map((conflict) => conflict.student.id),
       ).size,

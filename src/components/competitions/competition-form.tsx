@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useId, useRef } from "react";
 import { CheckCircle2, Loader2, Save } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
@@ -66,10 +66,25 @@ export function CompetitionForm({
   competition,
   onCancel,
 }: CompetitionFormProps) {
+  const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const action =
     mode === "create" ? createCompetitionAction : updateCompetitionAction;
   const [state, formAction] = useActionState(action, initialState);
+  const fieldIds = {
+    name: `${formId}-name`,
+    shortName: `${formId}-shortName`,
+    status: `${formId}-status`,
+    color: `${formId}-color`,
+    icon: `${formId}-icon`,
+    category: `${formId}-category`,
+    startsAt: `${formId}-startsAt`,
+    endsAt: `${formId}-endsAt`,
+    registrationOpensAt: `${formId}-registrationOpensAt`,
+    registrationClosesAt: `${formId}-registrationClosesAt`,
+    description: `${formId}-description`,
+    notes: `${formId}-notes`,
+  };
 
   useEffect(() => {
     if (mode === "create" && state.status === "success") {
@@ -96,11 +111,11 @@ export function CompetitionForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2 md:col-span-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-name`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.name}>
             Name
           </label>
           <input
-            id={`${mode}-name`}
+            id={fieldIds.name}
             name="name"
             defaultValue={competition?.name ?? ""}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
@@ -109,11 +124,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-shortName`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.shortName}>
             Short name
           </label>
           <input
-            id={`${mode}-shortName`}
+            id={fieldIds.shortName}
             name="shortName"
             defaultValue={competition?.shortName ?? ""}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
@@ -122,11 +137,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-status`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.status}>
             Status
           </label>
           <select
-            id={`${mode}-status`}
+            id={fieldIds.status}
             name="status"
             defaultValue={competition?.status ?? "draft"}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
@@ -141,7 +156,7 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-color`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.color}>
             Color
           </label>
           <div className="flex gap-2">
@@ -158,7 +173,7 @@ export function CompetitionForm({
               }}
             />
             <input
-              id={`${mode}-color`}
+              id={fieldIds.color}
               name="color"
               defaultValue={competition?.color ?? "#2563eb"}
               className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 font-mono text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
@@ -168,11 +183,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-icon`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.icon}>
             Icon
           </label>
           <input
-            id={`${mode}-icon`}
+            id={fieldIds.icon}
             name="icon"
             defaultValue={competition?.icon ?? ""}
             placeholder="Optional icon token"
@@ -182,11 +197,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-category`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.category}>
             Category
           </label>
           <input
-            id={`${mode}-category`}
+            id={fieldIds.category}
             name="category"
             defaultValue={competition?.category ?? ""}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
@@ -195,11 +210,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-startsAt`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.startsAt}>
             Start date
           </label>
           <input
-            id={`${mode}-startsAt`}
+            id={fieldIds.startsAt}
             name="startsAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.startsAt)}
@@ -209,11 +224,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-endsAt`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.endsAt}>
             End date
           </label>
           <input
-            id={`${mode}-endsAt`}
+            id={fieldIds.endsAt}
             name="endsAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.endsAt)}
@@ -225,12 +240,12 @@ export function CompetitionForm({
         <div className="grid gap-2">
           <label
             className="text-sm font-medium"
-            htmlFor={`${mode}-registrationOpensAt`}
+            htmlFor={fieldIds.registrationOpensAt}
           >
             Registration opens
           </label>
           <input
-            id={`${mode}-registrationOpensAt`}
+            id={fieldIds.registrationOpensAt}
             name="registrationOpensAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.registrationOpensAt)}
@@ -242,12 +257,12 @@ export function CompetitionForm({
         <div className="grid gap-2">
           <label
             className="text-sm font-medium"
-            htmlFor={`${mode}-registrationClosesAt`}
+            htmlFor={fieldIds.registrationClosesAt}
           >
             Registration closes
           </label>
           <input
-            id={`${mode}-registrationClosesAt`}
+            id={fieldIds.registrationClosesAt}
             name="registrationClosesAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.registrationClosesAt)}
@@ -257,11 +272,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2 md:col-span-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-description`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.description}>
             Description
           </label>
           <textarea
-            id={`${mode}-description`}
+            id={fieldIds.description}
             name="description"
             rows={3}
             defaultValue={competition?.description ?? ""}
@@ -271,11 +286,11 @@ export function CompetitionForm({
         </div>
 
         <div className="grid gap-2 md:col-span-2">
-          <label className="text-sm font-medium" htmlFor={`${mode}-notes`}>
+          <label className="text-sm font-medium" htmlFor={fieldIds.notes}>
             Notes
           </label>
           <textarea
-            id={`${mode}-notes`}
+            id={fieldIds.notes}
             name="notes"
             rows={3}
             defaultValue={competition?.notes ?? ""}

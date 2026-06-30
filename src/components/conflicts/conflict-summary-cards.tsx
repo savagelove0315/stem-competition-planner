@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, Flame, Users, Waves } from "lucide-react";
+import { AlertTriangle, CalendarDays, Flame, Info, Users, Waves } from "lucide-react";
 
 import type { ConflictViewModel } from "@/features/conflicts/types";
 
@@ -23,6 +23,11 @@ const cards = [
     icon: Waves,
   },
   {
+    key: "warningConflicts",
+    label: "Warning conflicts",
+    icon: Info,
+  },
+  {
     key: "studentsAffected",
     label: "Students affected",
     icon: Users,
@@ -36,7 +41,7 @@ const cards = [
 
 export function ConflictSummaryCards({ summary }: ConflictSummaryCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
       {cards.map((card) => {
         const Icon = card.icon;
 
