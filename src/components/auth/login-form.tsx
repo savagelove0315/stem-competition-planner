@@ -7,6 +7,14 @@ import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+function getSafeRedirectPath(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
+    return "/dashboard";
+  }
+
+  return value;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,8 +40,7 @@ export function LoginForm() {
       return;
     }
 
-    const nextPath = searchParams.get("next") ?? "/dashboard";
-    router.replace(nextPath.startsWith("/") ? nextPath : "/dashboard");
+    router.replace(getSafeRedirectPath(searchParams.get("next")));
     router.refresh();
   }
 
