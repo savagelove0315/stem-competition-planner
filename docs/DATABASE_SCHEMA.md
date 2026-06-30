@@ -295,6 +295,10 @@ Key columns:
 
 Competition-specific configuration should stay tied to competition data when added later.
 
+Current app-level settings:
+
+- `parent_notice_defaults` stores default wording and teacher information for generated parent notices in `setting_value` JSON. The generated notices themselves are not stored.
+
 ## Indexes
 
 The migration adds indexes for common filters and conflict checks:

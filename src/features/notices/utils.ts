@@ -1,4 +1,7 @@
 import type {
+  NoticeSettings,
+} from "@/features/notice-settings/types";
+import type {
   NoticeCompetition,
   NoticeCompetitionAssignment,
   NoticeStudent,
@@ -45,6 +48,7 @@ export function formatNoticeField(value: string | null) {
 export function buildNoticeText(
   student: NoticeStudent,
   assignments: NoticeCompetitionAssignment[],
+  settings: NoticeSettings,
 ) {
   const studentName = getNoticeStudentName(student);
   const rows = assignments.map((assignment, index) => {
@@ -59,23 +63,22 @@ export function buildNoticeText(
 
   return [
     "OFFICIAL NOTICE",
-    "STEM 比赛参与通知",
-    "STEM Competition Participation Notice",
+    settings.noticeTitleChinese,
+    settings.noticeSubtitleEnglish,
     "",
-    "亲爱的家长：",
-    "您好。",
+    settings.openingGreeting,
     "",
-    `谨此通知，${studentName} 同学已被遴选 / 报名参加以下 STEM 相关比赛：`,
+    settings.mainSentenceTemplate.replaceAll("{studentName}", studentName),
     "",
     rows.join("\n\n"),
     "",
-    "该学生可能需要在课后留下进行训练。具体训练日期与时间将会另行提前通知。",
-    "恳请家长给予鼓励与支持，并提醒孩子认真参与训练，为比赛做好准备。",
-    "感谢您的配合与支持。",
+    settings.trainingMessage,
+    settings.supportMessage,
+    settings.thankYouLine,
     "",
-    "Teacher Hilda",
-    "负责老师",
+    settings.teacherDisplayName,
+    settings.teacherRoleLabel,
     "",
-    "此通知供学生个人比赛参与确认用途。",
+    settings.footerNote,
   ].join("\n");
 }

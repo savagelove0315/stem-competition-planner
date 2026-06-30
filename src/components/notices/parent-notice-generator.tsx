@@ -5,14 +5,19 @@ import { useMemo, useState } from "react";
 import { NoticeActions } from "@/components/notices/notice-actions";
 import { NoticeStudentSelector } from "@/components/notices/notice-student-selector";
 import { ParentNoticePreview } from "@/components/notices/parent-notice-preview";
+import type { NoticeSettings } from "@/features/notice-settings/types";
 import type { NoticeStudent } from "@/features/notices/types";
 import { buildNoticeText } from "@/features/notices/utils";
 
 type ParentNoticeGeneratorProps = {
   students: NoticeStudent[];
+  settings: NoticeSettings;
 };
 
-export function ParentNoticeGenerator({ students }: ParentNoticeGeneratorProps) {
+export function ParentNoticeGenerator({
+  students,
+  settings,
+}: ParentNoticeGeneratorProps) {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const selectedStudent = useMemo(
     () => students.find((student) => student.id === selectedStudentId) ?? null,
@@ -20,7 +25,7 @@ export function ParentNoticeGenerator({ students }: ParentNoticeGeneratorProps) 
   );
   const assignments = selectedStudent?.competitionAssignments ?? [];
   const noticeText = selectedStudent
-    ? buildNoticeText(selectedStudent, assignments)
+    ? buildNoticeText(selectedStudent, assignments, settings)
     : "";
   const hasPrintableNotice = selectedStudent !== null && assignments.length > 0;
 
@@ -35,7 +40,11 @@ export function ParentNoticeGenerator({ students }: ParentNoticeGeneratorProps) 
         <NoticeActions noticeText={noticeText} disabled={!hasPrintableNotice} />
       </div>
 
-      <ParentNoticePreview student={selectedStudent} assignments={assignments} />
+      <ParentNoticePreview
+        student={selectedStudent}
+        assignments={assignments}
+        settings={settings}
+      />
     </div>
   );
 }

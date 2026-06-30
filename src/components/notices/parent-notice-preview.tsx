@@ -1,4 +1,7 @@
 import type {
+  NoticeSettings,
+} from "@/features/notice-settings/types";
+import type {
   NoticeCompetitionAssignment,
   NoticeStudent,
 } from "@/features/notices/types";
@@ -11,6 +14,7 @@ import {
 type ParentNoticePreviewProps = {
   student: NoticeStudent | null;
   assignments: NoticeCompetitionAssignment[];
+  settings: NoticeSettings;
 };
 
 function EmptyNoticeState({
@@ -31,6 +35,7 @@ function EmptyNoticeState({
 export function ParentNoticePreview({
   student,
   assignments,
+  settings,
 }: ParentNoticePreviewProps) {
   if (!student) {
     return (
@@ -51,6 +56,9 @@ export function ParentNoticePreview({
   }
 
   const studentName = getNoticeStudentName(student);
+  const [mainSentenceBeforeName, ...mainSentenceAfterName] =
+    settings.mainSentenceTemplate.split("{studentName}");
+  const openingGreetingLines = settings.openingGreeting.split("\n");
 
   return (
     <article className="notice-print-area notice-page overflow-hidden rounded-lg border bg-card shadow-sm">
@@ -59,22 +67,24 @@ export function ParentNoticePreview({
           OFFICIAL NOTICE
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-normal md:text-4xl">
-          STEM 比赛参与通知
+          {settings.noticeTitleChinese}
         </h2>
         <p className="mt-2 text-sm text-slate-200 md:text-base">
-          STEM Competition Participation Notice
+          {settings.noticeSubtitleEnglish}
         </p>
       </header>
 
       <div className="notice-content flex flex-col gap-6 p-6 md:p-8">
         <div className="text-base leading-8">
-          <p>亲爱的家长：</p>
-          <p>您好。</p>
+          {openingGreetingLines.map((line, index) => (
+            <p key={`${line}-${index}`}>{line}</p>
+          ))}
         </div>
 
         <p className="notice-student-line rounded-md border border-primary/20 bg-primary/10 px-4 py-3 text-base font-medium leading-8 text-foreground">
-          谨此通知，<span className="font-semibold text-primary">{studentName}</span>{" "}
-          同学已被遴选 / 报名参加以下 STEM 相关比赛：
+          {mainSentenceBeforeName}
+          <span className="font-semibold text-primary">{studentName}</span>
+          {mainSentenceAfterName.join("{studentName}")}
         </p>
 
         <div className="notice-table-wrapper overflow-x-auto rounded-md border">
@@ -120,22 +130,20 @@ export function ParentNoticePreview({
         </div>
 
         <div className="notice-message rounded-md border bg-muted/40 px-4 py-4 text-base leading-8">
-          <p>
-            该学生可能需要在课后留下进行训练。具体训练日期与时间将会另行提前通知。
-          </p>
-          <p>
-            恳请家长给予鼓励与支持，并提醒孩子认真参与训练，为比赛做好准备。
-          </p>
-          <p>感谢您的配合与支持。</p>
+          <p>{settings.trainingMessage}</p>
+          <p>{settings.supportMessage}</p>
+          <p>{settings.thankYouLine}</p>
         </div>
 
         <div className="pt-2">
-          <p className="text-lg font-semibold">Teacher Hilda</p>
-          <p className="mt-1 text-sm text-muted-foreground">负责老师</p>
+          <p className="text-lg font-semibold">{settings.teacherDisplayName}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {settings.teacherRoleLabel}
+          </p>
         </div>
 
         <footer className="border-t pt-4 text-xs text-muted-foreground">
-          此通知供学生个人比赛参与确认用途。
+          {settings.footerNote}
         </footer>
       </div>
     </article>

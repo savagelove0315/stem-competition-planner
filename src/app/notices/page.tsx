@@ -1,11 +1,15 @@
 import { ParentNoticeGenerator } from "@/components/notices/parent-notice-generator";
+import { getNoticeSettings } from "@/features/notice-settings/queries";
 import { listNoticeStudents } from "@/features/notices/queries";
 import { requireUser } from "@/lib/auth/require-user";
 
 export default async function NoticesPage() {
   await requireUser("/notices");
 
-  const students = await listNoticeStudents();
+  const [students, settings] = await Promise.all([
+    listNoticeStudents(),
+    getNoticeSettings(),
+  ]);
 
   return (
     <section className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6">
@@ -22,7 +26,7 @@ export default async function NoticesPage() {
         </div>
       </div>
 
-      <ParentNoticeGenerator students={students} />
+      <ParentNoticeGenerator students={students} settings={settings} />
     </section>
   );
 }
