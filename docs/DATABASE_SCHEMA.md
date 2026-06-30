@@ -18,11 +18,14 @@ Follow-up migrations:
 supabase/migrations/002_enable_rls_and_basic_policies.sql
 supabase/migrations/003_add_competition_metadata.sql
 supabase/migrations/004_add_student_profile_fields.sql
+supabase/migrations/010_add_competition_notice_fields.sql
 ```
 
 Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
 
 Migration `004_add_student_profile_fields.sql` adds generic student profile fields for class filtering, timeline context, reports, and future conflict review. These fields are student attributes, not competition participation flags.
+
+Migration `010_add_competition_notice_fields.sql` adds optional parent notice display fields to competitions. Parent notices remain read-only generated output and are not stored as notice records.
 
 ## Tables
 
@@ -38,6 +41,8 @@ Key columns:
 - `color text`
 - `icon text`
 - `category text`
+- `notice_mode text`
+- `notice_period text`
 - `description text`
 - `status text`
 - `starts_at timestamptz`
@@ -55,6 +60,8 @@ Metadata columns:
 - `color` is a required hex color with default `#2563eb` for timeline bars, dashboard cards, badges, and reports.
 - `icon` is an optional icon token or label stored as data for future generic UI rendering.
 - `category` is an optional grouping label for filtering, reporting, and organizing competitions.
+- `notice_mode` is an optional parent-facing format label used by generated notices.
+- `notice_period` is an optional flexible parent-facing period label used by generated notices when exact timestamps are not the clearest wording.
 
 Status values:
 

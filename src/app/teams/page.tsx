@@ -1,6 +1,9 @@
 import { PlaceholderPage } from "@/components/shared/placeholder-page";
+import { requireUser } from "@/lib/auth/require-user";
 
-export default function TeamsPage() {
+export default async function TeamsPage() {
+  await requireUser("/teams");
+
   return (
     <PlaceholderPage
       title="Teams"

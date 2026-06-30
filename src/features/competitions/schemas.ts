@@ -46,6 +46,14 @@ export const competitionFormSchema = z
       80,
       "Category must be 80 characters or fewer.",
     ),
+    noticeMode: optionalLimitedText(
+      80,
+      "Mode for notice must be 80 characters or fewer.",
+    ),
+    noticePeriod: optionalLimitedText(
+      120,
+      "Estimated period for notice must be 120 characters or fewer.",
+    ),
     description: optionalText,
     status: z.enum(competitionStatuses, {
       error: "Choose a valid competition status.",

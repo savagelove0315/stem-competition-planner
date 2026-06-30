@@ -4,8 +4,11 @@ import {
   listStudentCompetitionOptions,
   listStudents,
 } from "@/features/students/queries";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function StudentsPage() {
+  await requireUser("/students");
+
   const [students, competitionOptions] = await Promise.all([
     listStudents(),
     listStudentCompetitionOptions(),

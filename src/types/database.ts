@@ -46,6 +46,8 @@ export type Competition = {
   color: string;
   icon: string | null;
   category: string | null;
+  noticeMode: string | null;
+  noticePeriod: string | null;
   description: string | null;
   status: CompetitionStatus;
   startsAt: Timestamp | null;

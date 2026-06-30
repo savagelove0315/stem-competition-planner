@@ -192,6 +192,7 @@ export function CompetitionList({
               <th className="px-4 py-3 font-medium">Color</th>
               <th className="px-4 py-3 font-medium">Icon</th>
               <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Notice details</th>
               <th className="px-4 py-3 font-medium">Students</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Actions</th>
@@ -243,6 +244,26 @@ export function CompetitionList({
                       )}
                     </td>
                     <td className="px-4 py-4">
+                      <div className="grid gap-1 text-xs">
+                        <div>
+                          <span className="font-medium">Mode: </span>
+                          {competition.noticeMode ? (
+                            competition.noticeMode
+                          ) : (
+                            <EmptyMetadata />
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium">Period: </span>
+                          {competition.noticePeriod ? (
+                            competition.noticePeriod
+                          ) : (
+                            <EmptyMetadata />
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
                       <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs font-medium">
                         <Users aria-hidden="true" />
                         {competitionEnrollments.length}
@@ -289,7 +310,7 @@ export function CompetitionList({
 
                   {editingId === competition.id ? (
                     <tr>
-                      <td className="bg-muted/30 px-4 py-4" colSpan={8}>
+                      <td className="bg-muted/30 px-4 py-4" colSpan={9}>
                         <CompetitionForm
                           mode="edit"
                           competition={competition}

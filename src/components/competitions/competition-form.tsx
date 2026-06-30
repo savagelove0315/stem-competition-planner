@@ -78,6 +78,8 @@ export function CompetitionForm({
     color: `${formId}-color`,
     icon: `${formId}-icon`,
     category: `${formId}-category`,
+    noticeMode: `${formId}-noticeMode`,
+    noticePeriod: `${formId}-noticePeriod`,
     startsAt: `${formId}-startsAt`,
     endsAt: `${formId}-endsAt`,
     registrationOpensAt: `${formId}-registrationOpensAt`,
@@ -198,7 +200,7 @@ export function CompetitionForm({
 
         <div className="grid gap-2">
           <label className="text-sm font-medium" htmlFor={fieldIds.category}>
-            Category
+            Notice Category
           </label>
           <input
             id={fieldIds.category}
@@ -207,6 +209,34 @@ export function CompetitionForm({
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.category} />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={fieldIds.noticeMode}>
+            Mode for Notice
+          </label>
+          <input
+            id={fieldIds.noticeMode}
+            name="noticeMode"
+            defaultValue={competition?.noticeMode ?? ""}
+            placeholder="Optional parent-facing mode"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.noticeMode} />
+        </div>
+
+        <div className="grid gap-2 md:col-span-2">
+          <label className="text-sm font-medium" htmlFor={fieldIds.noticePeriod}>
+            Estimated Period for Notice
+          </label>
+          <input
+            id={fieldIds.noticePeriod}
+            name="noticePeriod"
+            defaultValue={competition?.noticePeriod ?? ""}
+            placeholder="Optional flexible display such as Date to be announced"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.noticePeriod} />
         </div>
 
         <div className="grid gap-2">

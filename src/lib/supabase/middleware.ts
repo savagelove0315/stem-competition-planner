@@ -5,6 +5,14 @@ import { getSupabasePublicEnv } from "./env";
 
 const publicRoutes = new Set(["/login", "/api/health/supabase"]);
 
+function getSafeNextPath(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
+    return "/dashboard";
+  }
+
+  return value;
+}
+
 function isPublicRoute(pathname: string): boolean {
   return (
     publicRoutes.has(pathname) ||
@@ -49,7 +57,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && pathname === "/login") {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/dashboard";
+    redirectUrl.pathname = getSafeNextPath(request.nextUrl.searchParams.get("next"));
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }

@@ -21,6 +21,9 @@ const activityStatuses: ActivityStatus[] = [
   "archived",
 ];
 
+const TIMELINE_LOCALE = "en-US";
+const TIMELINE_TIME_ZONE = "UTC";
+
 const dateValueSchema = z
   .string()
   .trim()
@@ -78,10 +81,12 @@ export function buildTimelineViewModel({
   competitions,
   activities,
   filters,
+  renderedAt,
 }: {
   competitions: TimelineCompetition[];
   activities: TimelineActivity[];
   filters: TimelineFilters;
+  renderedAt: string;
 }): TimelineViewModel {
   const filteredActivities = activities.filter((activity) =>
     doesActivityMatchFilters(activity, filters),
@@ -148,7 +153,9 @@ export function buildTimelineViewModel({
     summary: {
       competitionsShown: visibleCompetitionIds.size,
       activitiesShown: visibleActivities.length,
-      upcomingActivities: visibleActivities.filter(isUpcomingActivity).length,
+      upcomingActivities: visibleActivities.filter((activity) =>
+        isUpcomingActivity(activity, renderedAt),
+      ).length,
       participantAssignments: visibleActivities.reduce(
         (count, activity) => count + activity.participantCount,
         0,
@@ -276,15 +283,18 @@ function buildDateColumns(
     const key = toDateKey(currentDate);
     columns.push({
       key,
-      dayNumber: new Intl.DateTimeFormat("en", { day: "numeric" }).format(
-        currentDate,
-      ),
-      weekday: new Intl.DateTimeFormat("en", { weekday: "short" }).format(
-        currentDate,
-      ),
-      dateLabel: new Intl.DateTimeFormat("en", {
+      dayNumber: new Intl.DateTimeFormat(TIMELINE_LOCALE, {
+        day: "numeric",
+        timeZone: TIMELINE_TIME_ZONE,
+      }).format(currentDate),
+      weekday: new Intl.DateTimeFormat(TIMELINE_LOCALE, {
+        weekday: "short",
+        timeZone: TIMELINE_TIME_ZONE,
+      }).format(currentDate),
+      dateLabel: new Intl.DateTimeFormat(TIMELINE_LOCALE, {
         month: "short",
         day: "numeric",
+        timeZone: TIMELINE_TIME_ZONE,
       }).format(currentDate),
     });
     currentDate = addDays(currentDate, 1);
@@ -360,8 +370,11 @@ function buildEmptyCellsById(ids: string[], dateColumns: TimelineDateColumn[]) {
   );
 }
 
-function isUpcomingActivity(activity: TimelineActivity) {
-  return Boolean(activity.startsAt && new Date(activity.startsAt) >= new Date());
+function isUpcomingActivity(activity: TimelineActivity, renderedAt: string) {
+  return Boolean(
+    activity.startsAt &&
+      new Date(activity.startsAt).getTime() >= new Date(renderedAt).getTime(),
+  );
 }
 
 function formatDateTimeRange(startsAt: string | null, endsAt: string | null) {
@@ -386,9 +399,10 @@ function formatDate(value: string | null) {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(TIMELINE_LOCALE, {
     month: "short",
     day: "numeric",
+    timeZone: TIMELINE_TIME_ZONE,
   }).format(new Date(value));
 }
 
@@ -397,9 +411,10 @@ function formatTime(value: string | null) {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(TIMELINE_LOCALE, {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: TIMELINE_TIME_ZONE,
   }).format(new Date(value));
 }
 
@@ -410,7 +425,10 @@ function formatDateRangeLabel(columns: TimelineDateColumn[]) {
 
   const firstDate = parseDateKey(columns[0].key);
   const lastDate = parseDateKey(columns[columns.length - 1].key);
-  const formatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
+  const formatter = new Intl.DateTimeFormat(TIMELINE_LOCALE, {
+    dateStyle: "medium",
+    timeZone: TIMELINE_TIME_ZONE,
+  });
 
   if (columns.length === 1) {
     return formatter.format(firstDate);
@@ -429,8 +447,8 @@ function getSearchParam(value: string | string[] | undefined) {
 
 function getMonthRange(month: string) {
   const [year, monthNumber] = month.split("-").map(Number);
-  const startDate = toDateKey(new Date(year, monthNumber - 1, 1));
-  const endDate = toDateKey(new Date(year, monthNumber, 0));
+  const startDate = toDateKey(new Date(Date.UTC(year, monthNumber - 1, 1)));
+  const endDate = toDateKey(new Date(Date.UTC(year, monthNumber, 0)));
 
   return { startDate, endDate };
 }
@@ -453,20 +471,20 @@ function setOptionalParam(
 function parseDateKey(value: string) {
   const [year, month, day] = value.split("-").map(Number);
 
-  return new Date(year, month - 1, day);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 function toDateKey(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
+  const year = value.getUTCFullYear();
+  const month = String(value.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(value.getUTCDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
 function addDays(value: Date, days: number) {
   const nextDate = new Date(value);
-  nextDate.setDate(nextDate.getDate() + days);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
 
   return nextDate;
 }

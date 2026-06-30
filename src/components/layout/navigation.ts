@@ -6,6 +6,7 @@ import {
   Gauge,
   GraduationCap,
   ListChecks,
+  Mail,
   Settings,
   ShieldCheck,
   Users,
@@ -46,6 +47,11 @@ export const navigationItems = [
     title: "Conflicts",
     href: "/conflicts",
     icon: AlertTriangle,
+  },
+  {
+    title: "Notices",
+    href: "/notices",
+    icon: Mail,
   },
   {
     title: "Teams",

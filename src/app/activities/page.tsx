@@ -8,8 +8,11 @@ import {
   listActivities,
 } from "@/features/activities/queries";
 import { listCompetitions } from "@/features/competitions/queries";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function ActivitiesPage() {
+  await requireUser("/activities");
+
   const [
     activities,
     competitions,

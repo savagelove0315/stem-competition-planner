@@ -5,6 +5,7 @@ import {
   buildStudentTimelineViewModel,
   parseStudentTimelineFilters,
 } from "@/features/student-timeline/utils";
+import { requireUser } from "@/lib/auth/require-user";
 
 type StudentTimelinePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -22,6 +23,8 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
 export default async function StudentTimelinePage({
   searchParams,
 }: StudentTimelinePageProps) {
+  await requireUser("/student-timeline");
+
   const resolvedSearchParams = await searchParams;
   const filters = parseStudentTimelineFilters(resolvedSearchParams);
   const timelineData = await getStudentTimelineData();

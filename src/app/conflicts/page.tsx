@@ -6,6 +6,7 @@ import {
   buildConflictViewModel,
   parseConflictFilters,
 } from "@/features/conflicts/utils";
+import { requireUser } from "@/lib/auth/require-user";
 
 type ConflictsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -39,6 +40,8 @@ function ExplanationPanel({ bufferMinutes }: { bufferMinutes: number }) {
 }
 
 export default async function ConflictsPage({ searchParams }: ConflictsPageProps) {
+  await requireUser("/conflicts");
+
   const resolvedSearchParams = await searchParams;
   const filters = parseConflictFilters(resolvedSearchParams);
   const conflictData = await getConflictDetectionData();

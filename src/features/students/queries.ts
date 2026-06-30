@@ -48,6 +48,8 @@ type CompetitionRow = {
   color: string;
   icon: string | null;
   category: string | null;
+  notice_mode: string | null;
+  notice_period: string | null;
   description: string | null;
   status: Competition["status"];
   starts_at: string | null;
@@ -90,6 +92,8 @@ function mapCompetition(row: CompetitionRow): Competition {
     color: row.color,
     icon: row.icon,
     category: row.category,
+    noticeMode: row.notice_mode,
+    noticePeriod: row.notice_period,
     description: row.description,
     status: row.status,
     startsAt: row.starts_at,
@@ -184,6 +188,8 @@ export async function listStudents(): Promise<StudentWithCompetitions[]> {
             color,
             icon,
             category,
+            notice_mode,
+            notice_period,
             description,
             status,
             starts_at,

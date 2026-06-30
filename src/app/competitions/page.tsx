@@ -5,8 +5,11 @@ import {
   listCompetitionEnrollmentStudentOptions,
 } from "@/features/competition-enrollments/queries";
 import { listCompetitions } from "@/features/competitions/queries";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function CompetitionsPage() {
+  await requireUser("/competitions");
+
   const [competitions, enrollments, studentOptions] = await Promise.all([
     listCompetitions(),
     listCompetitionEnrollments(),

@@ -6,8 +6,11 @@ import { StudentWorkloadCard } from "@/components/dashboard/student-workload-car
 import { UpcomingActivitiesCard } from "@/components/dashboard/upcoming-activities-card";
 import { getDashboardData } from "@/features/dashboard/queries";
 import { buildDashboardViewModel } from "@/features/dashboard/utils";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function DashboardPage() {
+  await requireUser("/dashboard");
+
   const dashboardData = await getDashboardData();
   const viewModel = buildDashboardViewModel(dashboardData);
 

@@ -7,18 +7,23 @@ import {
   buildTimelineViewModel,
   parseTimelineFilters,
 } from "@/features/timeline/utils";
+import { requireUser } from "@/lib/auth/require-user";
 
 type TimelinePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function TimelinePage({ searchParams }: TimelinePageProps) {
+  await requireUser("/timeline");
+
   const resolvedSearchParams = await searchParams;
   const filters = parseTimelineFilters(resolvedSearchParams);
   const timelineData = await getTimelineData();
+  const renderedAt = new Date().toISOString();
   const viewModel = buildTimelineViewModel({
     ...timelineData,
     filters,
+    renderedAt,
   });
 
   return (

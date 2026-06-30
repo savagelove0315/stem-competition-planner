@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, Loader2, LogIn } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ function getSafeRedirectPath(value: string | null): string {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [email, setEmail] = useState("");
@@ -40,8 +39,18 @@ export function LoginForm() {
       return;
     }
 
-    router.replace(getSafeRedirectPath(searchParams.get("next")));
-    router.refresh();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      setError(sessionError?.message ?? "Unable to confirm the signed-in session.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    window.location.assign(getSafeRedirectPath(searchParams.get("next")));
   }
 
   return (

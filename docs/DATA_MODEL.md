@@ -46,8 +46,15 @@ Competitions include generic metadata for display and organization:
 - `color` for visual treatment in schedule and dashboard surfaces.
 - `icon` for a future UI icon token or label.
 - `category` for grouping, filtering, and reporting.
+- `notice_mode` for the parent-facing competition format shown in generated notices.
+- `notice_period` for flexible parent-facing timing text shown in generated notices.
 
 These values are stored on `competitions` because they describe a competition record. They must remain configurable data and must not become route names, enum values, permissions, or branching logic.
+
+Parent notices are generated from `students -> student_competitions -> competitions`.
+They reuse `competitions.category` as the notice category and use
+`competitions.notice_mode` and `competitions.notice_period` when present.
+Generated notices are not stored in the database in Phase 11A.
 
 ## Competition Participation
 
