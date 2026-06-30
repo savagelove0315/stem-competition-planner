@@ -64,8 +64,9 @@ function formatDate(value: string | null) {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
+    timeZone: "Asia/Kuching",
   }).format(new Date(value));
 }
 
@@ -74,9 +75,10 @@ function formatTime(value: string | null) {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "Asia/Kuching",
   }).format(new Date(value));
 }
 

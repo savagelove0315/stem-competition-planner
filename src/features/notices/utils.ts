@@ -21,10 +21,11 @@ export function formatNoticePeriod(competition: NoticeCompetition) {
     return EMPTY_NOTICE_VALUE;
   }
 
-  const formatter = new Intl.DateTimeFormat("en-MY", {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "Asia/Kuching",
   });
 
   if (competition.startsAt && competition.endsAt) {
