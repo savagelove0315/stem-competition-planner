@@ -86,6 +86,10 @@ Activities belong to one competition. Students join activities through `activity
 - The student is registered for that competition.
 
 This avoids assigning a student to an activity in a competition they have not joined.
+It also has a direct `student_id` foreign key to `students.id` for participant
+display and Supabase relationship discovery. That direct FK does not replace the
+composite `student_id, competition_id` relationship to `student_competitions`,
+which remains the same-competition registration enforcement rule.
 
 ## Teams
 

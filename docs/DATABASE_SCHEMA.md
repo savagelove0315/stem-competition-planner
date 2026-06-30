@@ -162,6 +162,11 @@ Important constraints:
 - A participant must be registered for the same competition as the activity.
 - A student can appear only once per activity.
 - Participants are not stored as comma-separated text.
+- A direct `student_id` foreign key to `students.id` supports participant
+  display queries and Supabase relationship discovery.
+- The composite `student_id, competition_id` foreign key to
+  `student_competitions` remains the rule that enforces same-competition
+  registration.
 
 ### `teams`
 

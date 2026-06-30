@@ -1,13 +1,26 @@
 import { ActivityForm } from "@/components/activities/activity-form";
 import { ActivityList } from "@/components/activities/activity-list";
 import {
+  listActivityParticipants,
+  listActivityParticipantStudentOptions,
+} from "@/features/activity-participants/queries";
+import {
   listActivities,
 } from "@/features/activities/queries";
 import { listCompetitions } from "@/features/competitions/queries";
 
 export default async function ActivitiesPage() {
-  const activities = await listActivities();
-  const competitions = await listCompetitions();
+  const [
+    activities,
+    competitions,
+    participantAssignments,
+    participantStudentOptions,
+  ] = await Promise.all([
+    listActivities(),
+    listCompetitions(),
+    listActivityParticipants(),
+    listActivityParticipantStudentOptions(),
+  ]);
   const competitionOptions = competitions.map((competition) => ({
     id: competition.id,
     name: competition.name,
@@ -17,7 +30,7 @@ export default async function ActivitiesPage() {
   }));
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-6">
       <div className="rounded-lg border bg-card p-6 shadow-sm">
         <div className="max-w-3xl">
           <p className="text-sm font-medium text-primary">Planning</p>
@@ -35,6 +48,8 @@ export default async function ActivitiesPage() {
       <ActivityList
         activities={activities}
         competitionOptions={competitionOptions}
+        participantAssignments={participantAssignments}
+        participantStudentOptions={participantStudentOptions}
       />
     </section>
   );

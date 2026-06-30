@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { CheckCircle2, Loader2, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ type ActivityFormProps = {
   activity?: ActivityWithCompetition;
   competitionOptions: ActivityCompetitionOption[];
   onCancel?: () => void;
+  onSuccess?: () => void;
 };
 
 const initialState: ActivityActionState = {
@@ -73,22 +75,33 @@ export function ActivityForm({
   activity,
   competitionOptions,
   onCancel,
+  onSuccess,
 }: ActivityFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   const action = mode === "create" ? createActivityAction : updateActivityAction;
   const [state, formAction] = useActionState(action, initialState);
 
   useEffect(() => {
-    if (mode === "create" && state.status === "success") {
-      formRef.current?.reset();
+    if (state.status !== "success") {
+      return;
     }
-  }, [mode, state.status]);
+
+    router.refresh();
+
+    if (mode === "create") {
+      formRef.current?.reset();
+      return;
+    }
+
+    onSuccess?.();
+  }, [mode, onSuccess, router, state.status]);
 
   return (
     <form
       ref={formRef}
       action={formAction}
-      className="grid gap-5 rounded-lg border bg-card p-5 shadow-sm"
+      className="grid w-full min-w-0 gap-5 rounded-lg border bg-card p-5 shadow-sm"
     >
       {activity ? <input type="hidden" name="id" value={activity.id} /> : null}
 
@@ -102,8 +115,8 @@ export function ActivityForm({
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2 md:col-span-2">
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 gap-2 md:col-span-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-name`}>
             Activity name
           </label>
@@ -111,12 +124,12 @@ export function ActivityForm({
             id={`${mode}-name`}
             name="name"
             defaultValue={activity?.name ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.name} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label
             className="text-sm font-medium"
             htmlFor={`${mode}-competitionId`}
@@ -127,7 +140,7 @@ export function ActivityForm({
             id={`${mode}-competitionId`}
             name="competitionId"
             defaultValue={activity?.competitionId ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">Choose a competition</option>
             {competitionOptions.map((competition) => (
@@ -141,7 +154,7 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.competitionId} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label
             className="text-sm font-medium"
             htmlFor={`${mode}-activityType`}
@@ -152,7 +165,7 @@ export function ActivityForm({
             id={`${mode}-activityType`}
             name="activityType"
             defaultValue={activity?.activityType ?? "Training"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             {activityTypes.map((activityType) => (
               <option key={activityType} value={activityType}>
@@ -163,7 +176,7 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.activityType} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-startDate`}>
             Start date
           </label>
@@ -172,12 +185,12 @@ export function ActivityForm({
             name="startDate"
             type="date"
             defaultValue={dateInputValue(activity?.startsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.startDate} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-endDate`}>
             End date
           </label>
@@ -186,12 +199,12 @@ export function ActivityForm({
             name="endDate"
             type="date"
             defaultValue={dateInputValue(activity?.endsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.endDate} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-startTime`}>
             Start time
           </label>
@@ -200,12 +213,12 @@ export function ActivityForm({
             name="startTime"
             type="time"
             defaultValue={timeInputValue(activity?.startsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.startTime} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-endTime`}>
             End time
           </label>
@@ -214,12 +227,12 @@ export function ActivityForm({
             name="endTime"
             type="time"
             defaultValue={timeInputValue(activity?.endsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.endTime} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-location`}>
             Location
           </label>
@@ -227,12 +240,12 @@ export function ActivityForm({
             id={`${mode}-location`}
             name="location"
             defaultValue={activity?.location ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.location} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-capacity`}>
             Capacity
           </label>
@@ -242,12 +255,12 @@ export function ActivityForm({
             type="number"
             min={1}
             defaultValue={activity?.capacity ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.capacity} />
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-status`}>
             Status
           </label>
@@ -255,7 +268,7 @@ export function ActivityForm({
             id={`${mode}-status`}
             name="status"
             defaultValue={activity?.status ?? "planned"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             {activityStatuses.map((status) => (
               <option key={status} value={status}>
@@ -266,7 +279,7 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.status} />
         </div>
 
-        <label className="flex min-h-10 items-center gap-3 rounded-md border bg-background px-3 py-2 text-sm">
+        <label className="flex min-h-10 min-w-0 items-center gap-3 rounded-md border bg-background px-3 py-2 text-sm">
           <input
             type="checkbox"
             name="requiresTeam"
@@ -276,7 +289,7 @@ export function ActivityForm({
           <span>Requires a team</span>
         </label>
 
-        <div className="grid gap-2 md:col-span-2">
+        <div className="grid min-w-0 gap-2 md:col-span-2">
           <label
             className="text-sm font-medium"
             htmlFor={`${mode}-description`}
@@ -288,12 +301,12 @@ export function ActivityForm({
             name="description"
             rows={3}
             defaultValue={activity?.description ?? ""}
-            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-24 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.description} />
         </div>
 
-        <div className="grid gap-2 md:col-span-2">
+        <div className="grid min-w-0 gap-2 md:col-span-2">
           <label className="text-sm font-medium" htmlFor={`${mode}-notes`}>
             Notes / remarks
           </label>
@@ -302,7 +315,7 @@ export function ActivityForm({
             name="notes"
             rows={3}
             defaultValue={activity?.notes ?? ""}
-            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-24 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.notes} />
         </div>

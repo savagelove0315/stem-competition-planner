@@ -1,11 +1,16 @@
 "use client";
 
-import { Fragment, useActionState, useState } from "react";
-import { Archive, Ban, Pencil } from "lucide-react";
+import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import { Archive, Ban, Pencil, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { ActivityForm } from "@/components/activities/activity-form";
+import { ActivityParticipantsManager } from "@/components/activities/activity-participants-manager";
 import { Button } from "@/components/ui/button";
+import type {
+  ActivityParticipantAssignment,
+  ActivityParticipantStudentOption,
+} from "@/features/activity-participants/queries";
 import {
   archiveActivityAction,
   cancelActivityAction,
@@ -21,11 +26,19 @@ import type { ActivityStatus } from "@/types/database";
 type ActivityListProps = {
   activities: ActivityWithCompetition[];
   competitionOptions: ActivityCompetitionOption[];
+  participantAssignments: ActivityParticipantAssignment[];
+  participantStudentOptions: ActivityParticipantStudentOption[];
 };
 
 type StatusActionFormProps = {
   activity: ActivityWithCompetition;
   actionType: "cancel" | "archive";
+};
+
+type EditActivityModalProps = {
+  activity: ActivityWithCompetition;
+  competitionOptions: ActivityCompetitionOption[];
+  onClose: () => void;
 };
 
 const initialStatusState: ActivityActionState = {
@@ -117,11 +130,85 @@ function StatusActionForm({ activity, actionType }: StatusActionFormProps) {
   );
 }
 
+function EditActivityModal({
+  activity,
+  competitionOptions,
+  onClose,
+}: EditActivityModalProps) {
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-activity-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-3xl min-w-0 rounded-lg bg-background shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+          <div className="min-w-0">
+            <h2 id="edit-activity-title" className="text-lg font-semibold">
+              Edit Activity
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Update the selected activity without expanding the activity table.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            <X aria-hidden="true" />
+            Close
+          </Button>
+        </div>
+        <div className="max-h-[calc(100vh-9rem)] overflow-y-auto p-5">
+          <ActivityForm
+            mode="edit"
+            activity={activity}
+            competitionOptions={competitionOptions}
+            onCancel={onClose}
+            onSuccess={onClose}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ActivityList({
   activities,
   competitionOptions,
+  participantAssignments,
+  participantStudentOptions,
 }: ActivityListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const editingActivity = useMemo(
+    () => activities.find((activity) => activity.id === editingId) ?? null,
+    [activities, editingId],
+  );
+  const participantsByActivity = useMemo(() => {
+    const groupedParticipants = new Map<string, ActivityParticipantAssignment[]>();
+
+    participantAssignments.forEach((participant) => {
+      const participants = groupedParticipants.get(participant.activityId) ?? [];
+      participants.push(participant);
+      groupedParticipants.set(participant.activityId, participants);
+    });
+
+    return groupedParticipants;
+  }, [participantAssignments]);
 
   if (activities.length === 0) {
     return (
@@ -135,7 +222,7 @@ export function ActivityList({
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border bg-card shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
       <div className="border-b px-5 py-4">
         <h2 className="text-lg font-semibold">Activity records</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -144,7 +231,7 @@ export function ActivityList({
         </p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="w-full min-w-0 overflow-x-auto">
         <table className="w-full min-w-[1180px] text-left text-sm">
           <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
             <tr>
@@ -163,12 +250,17 @@ export function ActivityList({
             {activities.map((activity) => {
               const competition = activity.competition;
               const timeRange = formatTimeRange(activity);
+              const participants = participantsByActivity.get(activity.id) ?? [];
 
               return (
                 <Fragment key={activity.id}>
                   <tr className="align-top">
                     <td className="px-4 py-4">
                       <div className="font-medium">{activity.name}</div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {participants.length} assigned student
+                        {participants.length === 1 ? "" : "s"}
+                      </p>
                       {activity.description ? (
                         <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
                           {activity.description}
@@ -232,11 +324,7 @@ export function ActivityList({
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            setEditingId((current) =>
-                              current === activity.id ? null : activity.id,
-                            )
-                          }
+                          onClick={() => setEditingId(activity.id)}
                         >
                           <Pencil aria-hidden="true" />
                           Edit
@@ -247,24 +335,30 @@ export function ActivityList({
                     </td>
                   </tr>
 
-                  {editingId === activity.id ? (
-                    <tr>
-                      <td className="bg-muted/30 px-4 py-4" colSpan={9}>
-                        <ActivityForm
-                          mode="edit"
-                          activity={activity}
-                          competitionOptions={competitionOptions}
-                          onCancel={() => setEditingId(null)}
-                        />
-                      </td>
-                    </tr>
-                  ) : null}
+                  <tr>
+                    <td className="bg-muted/20 px-4 py-4" colSpan={9}>
+                      <ActivityParticipantsManager
+                        activityId={activity.id}
+                        competitionId={activity.competitionId}
+                        participants={participants}
+                        studentOptions={participantStudentOptions}
+                      />
+                    </td>
+                  </tr>
                 </Fragment>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {editingActivity ? (
+        <EditActivityModal
+          activity={editingActivity}
+          competitionOptions={competitionOptions}
+          onClose={() => setEditingId(null)}
+        />
+      ) : null}
     </section>
   );
 }
