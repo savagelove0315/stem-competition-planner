@@ -1,15 +1,53 @@
-import { PlaceholderPage } from "@/components/shared/placeholder-page";
+import { CompetitionOverviewCard } from "@/components/dashboard/competition-overview-card";
+import { ConflictAlertsCard } from "@/components/dashboard/conflict-alerts-card";
+import { DashboardShortcuts } from "@/components/dashboard/dashboard-shortcuts";
+import { DashboardSummaryCards } from "@/components/dashboard/dashboard-summary-cards";
+import { StudentWorkloadCard } from "@/components/dashboard/student-workload-card";
+import { UpcomingActivitiesCard } from "@/components/dashboard/upcoming-activities-card";
+import { getDashboardData } from "@/features/dashboard/queries";
+import { buildDashboardViewModel } from "@/features/dashboard/utils";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const dashboardData = await getDashboardData();
+  const viewModel = buildDashboardViewModel(dashboardData);
+
   return (
-    <PlaceholderPage
-      title="Dashboard"
-      description="A future operations overview for competition planning, registrations, schedule health, and conflict status."
-      nextSteps={[
-        "Add summary metrics from generic competition data.",
-        "Surface upcoming activities and unresolved conflicts.",
-        "Introduce reporting charts after data services exist.",
-      ]}
-    />
+    <section className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6">
+      <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="max-w-3xl">
+          <p className="text-sm font-medium text-primary">Planning</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-normal md:text-3xl">
+            Dashboard
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground md:text-base">
+            Overview of competitions, activities, student workload, and
+            schedule risks.
+          </p>
+        </div>
+      </div>
+
+      <DashboardSummaryCards summary={viewModel.summary} />
+
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <UpcomingActivitiesCard
+          activities={viewModel.upcomingActivities}
+          hasActivities={viewModel.hasActivities}
+        />
+        <ConflictAlertsCard conflicts={viewModel.unresolvedConflicts} />
+      </div>
+
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[1fr_1fr]">
+        <CompetitionOverviewCard
+          competitions={viewModel.competitionOverviews}
+          hasCompetitions={viewModel.hasCompetitions}
+        />
+        <StudentWorkloadCard
+          students={viewModel.studentWorkloads}
+          hasStudents={viewModel.hasStudents}
+        />
+      </div>
+
+      <DashboardShortcuts />
+    </section>
   );
 }
