@@ -252,6 +252,13 @@ Key columns:
 - `team_id uuid`
 - `summary text`
 - `details jsonb`
+- `conflict_key text unique`
+- `conflict_start_date date`
+- `conflict_end_date date`
+- `teacher_note text`
+- `resolution_note text`
+- `reviewed_at timestamptz`
+- `last_seen_at timestamptz`
 - `detected_at timestamptz`
 - `resolved_at timestamptz`
 - `created_at timestamptz`

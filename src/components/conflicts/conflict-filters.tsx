@@ -102,6 +102,20 @@ export function ConflictFilters({
         </label>
 
         <label className="grid gap-1 text-sm font-medium">
+          <span>Review status</span>
+          <select
+            name="reviewStatus"
+            defaultValue={filters.reviewStatus ?? ""}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">All review statuses</option>
+            <option value="unreviewed">New / unreviewed</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </label>
+
+        <label className="grid gap-1 text-sm font-medium">
           <span>Grade level</span>
           <select
             name="gradeLevel"

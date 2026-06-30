@@ -1,8 +1,10 @@
 import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 
+import { ConflictReviewActions } from "@/components/conflicts/conflict-review-actions";
 import type {
   ActivityConflictSide,
   ConflictDetectionSeverity,
+  ConflictReviewStatus,
   ConflictViewModel,
 } from "@/features/conflicts/types";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,12 @@ const severityIcons = {
   mild: AlertTriangle,
   warning: Info,
 } satisfies Record<ConflictDetectionSeverity, typeof AlertCircle>;
+
+const reviewStatusStyles: Record<ConflictReviewStatus, string> = {
+  unreviewed: "border-muted bg-muted text-muted-foreground",
+  reviewed: "border-primary/30 bg-primary/10 text-primary",
+  resolved: "border-emerald-600/40 bg-emerald-600/10 text-emerald-700",
+};
 
 function EmptyMetadata() {
   return <span className="text-muted-foreground">Not set</span>;
@@ -62,6 +70,21 @@ function SeverityBadge({ severity }: { severity: ConflictDetectionSeverity }) {
   );
 }
 
+function ReviewStatusBadge({ status }: { status: ConflictReviewStatus }) {
+  const label = status === "unreviewed" ? "New / unreviewed" : status;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+        reviewStatusStyles[status],
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 export function ConflictTable({ viewModel }: ConflictTableProps) {
   if (!viewModel.hasParticipantData) {
     return (
@@ -95,7 +118,7 @@ export function ConflictTable({ viewModel }: ConflictTableProps) {
       </div>
 
       <div className="w-full min-w-0 overflow-x-auto">
-        <table className="w-full min-w-[1500px] text-left text-sm">
+        <table className="w-full min-w-[1900px] text-left text-sm">
           <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Student</th>
@@ -109,8 +132,11 @@ export function ConflictTable({ viewModel }: ConflictTableProps) {
               <th className="px-4 py-3 font-medium">Competition 2</th>
               <th className="px-4 py-3 font-medium">Activity 2 time</th>
               <th className="px-4 py-3 font-medium">Severity</th>
+              <th className="px-4 py-3 font-medium">Review status</th>
+              <th className="px-4 py-3 font-medium">Note</th>
               <th className="px-4 py-3 font-medium">Reason</th>
               <th className="px-4 py-3 font-medium">Suggested action</th>
+              <th className="px-4 py-3 font-medium">Review actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -150,11 +176,41 @@ export function ConflictTable({ viewModel }: ConflictTableProps) {
                 <td className="px-4 py-4">
                   <SeverityBadge severity={conflict.severity} />
                 </td>
+                <td className="px-4 py-4">
+                  <ReviewStatusBadge status={conflict.reviewStatus} />
+                </td>
+                <td className="max-w-72 px-4 py-4 text-muted-foreground">
+                  {conflict.teacherNote || conflict.resolutionNote ? (
+                    <div className="grid gap-2">
+                      {conflict.teacherNote ? (
+                        <p>
+                          <span className="font-medium text-foreground">
+                            Teacher:
+                          </span>{" "}
+                          {conflict.teacherNote}
+                        </p>
+                      ) : null}
+                      {conflict.resolutionNote ? (
+                        <p>
+                          <span className="font-medium text-foreground">
+                            Resolution:
+                          </span>{" "}
+                          {conflict.resolutionNote}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <EmptyMetadata />
+                  )}
+                </td>
                 <td className="max-w-72 px-4 py-4 text-muted-foreground">
                   {conflict.reason}
                 </td>
                 <td className="max-w-72 px-4 py-4">
                   {conflict.suggestedAction}
+                </td>
+                <td className="px-4 py-4">
+                  <ConflictReviewActions conflict={conflict} />
                 </td>
               </tr>
             ))}

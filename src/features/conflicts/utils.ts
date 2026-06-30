@@ -5,6 +5,8 @@ import type {
   ConflictCompetition,
   ConflictDetectionSeverity,
   ConflictFilters,
+  ConflictReviewRecord,
+  ConflictReviewStatus,
   ConflictStudent,
   ConflictViewModel,
   DetectedConflict,
@@ -29,6 +31,11 @@ const severitySchema = z
   .or(z.literal(""))
   .catch("");
 
+const reviewStatusSchema = z
+  .enum(["unreviewed", "reviewed", "resolved"])
+  .or(z.literal(""))
+  .catch("");
+
 const conflictFilterSchema = z
   .object({
     month: monthValueSchema,
@@ -36,6 +43,7 @@ const conflictFilterSchema = z
     endDate: dateValueSchema,
     competitionId: z.string().trim().catch(""),
     severity: severitySchema,
+    reviewStatus: reviewStatusSchema,
     gradeLevel: z.string().trim().catch(""),
     className: z.string().trim().catch(""),
     onlyMultiCompetition: z
@@ -56,6 +64,7 @@ const conflictFilterSchema = z
       endDate,
       competitionId: value.competitionId || null,
       severity: value.severity || null,
+      reviewStatus: value.reviewStatus || null,
       gradeLevel: value.gradeLevel || null,
       className: value.className || null,
       onlyMultiCompetition: value.onlyMultiCompetition,
@@ -88,6 +97,7 @@ export function parseConflictFilters(
     endDate: getSearchParam(searchParams.endDate),
     competitionId: getSearchParam(searchParams.competitionId),
     severity: getSearchParam(searchParams.severity),
+    reviewStatus: getSearchParam(searchParams.reviewStatus),
     gradeLevel: getSearchParam(searchParams.gradeLevel),
     className: getSearchParam(searchParams.className),
     onlyMultiCompetition: getSearchParam(searchParams.onlyMultiCompetition),
@@ -98,12 +108,14 @@ export function buildConflictViewModel({
   students,
   assignments,
   competitions,
+  reviewRecords,
   filters,
   bufferMinutes = DEFAULT_BUFFER_MINUTES,
 }: {
   students: ConflictStudent[];
   assignments: ConflictAssignment[];
   competitions: ConflictCompetition[];
+  reviewRecords: ConflictReviewRecord[];
   filters: ConflictFilters;
   bufferMinutes?: number;
 }): ConflictViewModel {
@@ -122,6 +134,13 @@ export function buildConflictViewModel({
     );
   });
   const assignmentsByStudent = new Map<string, ConflictAssignment[]>();
+  const reviewRecordsByKey = new Map(
+    reviewRecords.flatMap((record) => {
+      const key = record.conflictKey ?? getReviewRecordFallbackKey(record);
+
+      return key ? [[key, record] as const] : [];
+    }),
+  );
 
   activeAssignments.forEach((assignment) => {
     if (!studentsById.has(assignment.studentId)) {
@@ -170,6 +189,7 @@ export function buildConflictViewModel({
             firstAssignment,
             secondAssignment,
             evaluation,
+            reviewRecordsByKey,
           }),
         );
       }
@@ -178,6 +198,9 @@ export function buildConflictViewModel({
 
   const filteredConflicts = detectedConflicts.filter((conflict) =>
     doesConflictMatchFilters(conflict, filters),
+  );
+  const unresolvedConflicts = filteredConflicts.filter(
+    (conflict) => conflict.reviewStatus !== "resolved",
   );
   const seriousConflicts = filteredConflicts.filter(
     (conflict) => conflict.severity === "serious",
@@ -193,13 +216,18 @@ export function buildConflictViewModel({
   return {
     conflicts: filteredConflicts,
     summary: {
-      totalConflicts: filteredConflicts.length,
-      seriousConflicts: seriousConflicts.length,
-      mildConflicts: filteredConflicts.filter(
-        (conflict) => conflict.severity === "mild",
+      totalDetectedConflicts: filteredConflicts.length,
+      unreviewedConflicts: filteredConflicts.filter(
+        (conflict) => conflict.reviewStatus === "unreviewed",
       ).length,
-      warningConflicts: filteredConflicts.filter(
-        (conflict) => conflict.severity === "warning",
+      reviewedConflicts: filteredConflicts.filter(
+        (conflict) => conflict.reviewStatus === "reviewed",
+      ).length,
+      resolvedConflicts: filteredConflicts.filter(
+        (conflict) => conflict.reviewStatus === "resolved",
+      ).length,
+      seriousUnresolvedConflicts: unresolvedConflicts.filter(
+        (conflict) => conflict.severity === "serious",
       ).length,
       studentsAffected: new Set(
         filteredConflicts.map((conflict) => conflict.student.id),
@@ -298,14 +326,25 @@ function buildDetectedConflict({
   firstAssignment,
   secondAssignment,
   evaluation,
+  reviewRecordsByKey,
 }: {
   student: ConflictStudent;
   firstAssignment: ConflictAssignment;
   secondAssignment: ConflictAssignment;
   evaluation: NonNullable<PairEvaluation>;
+  reviewRecordsByKey: Map<string, ConflictReviewRecord>;
 }): DetectedConflict {
   const firstActivity = firstAssignment.activity;
   const secondActivity = secondAssignment.activity;
+  const conflictKey = buildConflictKey({
+    studentId: student.id,
+    firstActivityId: firstAssignment.activityId,
+    secondActivityId: secondAssignment.activityId,
+    startDate: evaluation.startDate,
+    endDate: evaluation.endDate,
+  });
+  const savedRecord = reviewRecordsByKey.get(conflictKey) ?? null;
+  const reviewStatus = getReviewStatus(savedRecord);
 
   return {
     id: [
@@ -315,6 +354,7 @@ function buildDetectedConflict({
       evaluation.startDate,
       evaluation.endDate,
     ].join(":"),
+    conflictKey,
     student,
     conflictDateLabel: formatDateRangeLabel(
       evaluation.startDate,
@@ -361,6 +401,10 @@ function buildDetectedConflict({
       startsAt: secondActivity?.startsAt ?? null,
       endsAt: secondActivity?.endsAt ?? null,
     },
+    savedRecord,
+    reviewStatus,
+    teacherNote: savedRecord?.teacherNote ?? null,
+    resolutionNote: savedRecord?.resolutionNote ?? null,
   };
 }
 
@@ -384,6 +428,10 @@ function doesConflictMatchFilters(
     return false;
   }
 
+  if (filters.reviewStatus && conflict.reviewStatus !== filters.reviewStatus) {
+    return false;
+  }
+
   if (
     filters.competitionId &&
     conflict.activityOne.competitionId !== filters.competitionId &&
@@ -400,6 +448,63 @@ function doesConflictMatchFilters(
   const rangeEnd = filters.endDate ?? conflict.conflictEndDate;
 
   return conflict.conflictStartDate <= rangeEnd && conflict.conflictEndDate >= rangeStart;
+}
+
+export function buildConflictKey({
+  studentId,
+  firstActivityId,
+  secondActivityId,
+  startDate,
+  endDate,
+}: {
+  studentId: string;
+  firstActivityId: string;
+  secondActivityId: string;
+  startDate: string;
+  endDate: string;
+}) {
+  const [activityAId, activityBId] = [firstActivityId, secondActivityId].sort();
+
+  return [
+    "student_overlap",
+    studentId,
+    activityAId,
+    activityBId,
+    startDate,
+    endDate,
+  ].join(":");
+}
+
+function getReviewStatus(
+  savedRecord: ConflictReviewRecord | null,
+): ConflictReviewStatus {
+  if (!savedRecord) {
+    return "unreviewed";
+  }
+
+  if (savedRecord.status === "resolved") {
+    return "resolved";
+  }
+
+  if (savedRecord.status === "acknowledged") {
+    return "reviewed";
+  }
+
+  return "unreviewed";
+}
+
+function getReviewRecordFallbackKey(record: ConflictReviewRecord) {
+  if (!record.studentId || !record.conflictStartDate || !record.conflictEndDate) {
+    return null;
+  }
+
+  return buildConflictKey({
+    studentId: record.studentId,
+    firstActivityId: record.primaryActivityId,
+    secondActivityId: record.conflictingActivityId,
+    startDate: record.conflictStartDate,
+    endDate: record.conflictEndDate,
+  });
 }
 
 function getActivityWindow(assignment: ConflictAssignment): ActivityWindow | null {

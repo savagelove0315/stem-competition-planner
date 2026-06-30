@@ -17,7 +17,13 @@ export type ActivityParticipantStatus = "assigned" | "attended" | "absent" | "ca
 export type TeamStatus = "active" | "inactive" | "disqualified" | "archived";
 export type TeamMemberStatus = "active" | "inactive" | "left";
 export type ConflictType = "student_overlap" | "team_overlap" | "location_overlap" | "capacity" | "other";
-export type ConflictSeverity = "info" | "warning" | "error" | "critical";
+export type ConflictSeverity =
+  | "info"
+  | "warning"
+  | "error"
+  | "critical"
+  | "mild"
+  | "serious";
 export type ConflictStatus = "open" | "acknowledged" | "resolved" | "dismissed";
 
 export type Teacher = {
@@ -141,6 +147,7 @@ export type TeamMember = {
 
 export type ConflictRecord = {
   id: UUID;
+  conflictKey: string | null;
   conflictType: ConflictType;
   severity: ConflictSeverity;
   status: ConflictStatus;
@@ -152,6 +159,12 @@ export type ConflictRecord = {
   teamId: UUID | null;
   summary: string;
   details: JsonValue;
+  conflictStartDate: string | null;
+  conflictEndDate: string | null;
+  teacherNote: string | null;
+  resolutionNote: string | null;
+  reviewedAt: Timestamp | null;
+  lastSeenAt: Timestamp | null;
   detectedAt: Timestamp;
   resolvedAt: Timestamp | null;
   createdAt: Timestamp;

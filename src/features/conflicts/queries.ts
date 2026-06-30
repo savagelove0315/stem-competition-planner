@@ -7,6 +7,8 @@ import type {
   ConflictCompetition,
   ConflictCompetitionRow,
   ConflictData,
+  ConflictReviewRecord,
+  ConflictReviewRecordRow,
   ConflictStudent,
   ConflictStudentRow,
 } from "@/features/conflicts/types";
@@ -71,9 +73,37 @@ function mapAssignment(row: ConflictAssignmentRow): ConflictAssignment {
   };
 }
 
+function mapReviewRecord(row: ConflictReviewRecordRow): ConflictReviewRecord {
+  return {
+    id: row.id,
+    conflictKey: row.conflict_key,
+    conflictType: row.conflict_type,
+    severity: row.severity,
+    status: row.status,
+    primaryCompetitionId: row.primary_competition_id,
+    primaryActivityId: row.primary_activity_id,
+    conflictingCompetitionId: row.conflicting_competition_id,
+    conflictingActivityId: row.conflicting_activity_id,
+    studentId: row.student_id,
+    teamId: row.team_id,
+    summary: row.summary,
+    details: row.details,
+    conflictStartDate: row.conflict_start_date,
+    conflictEndDate: row.conflict_end_date,
+    teacherNote: row.teacher_note,
+    resolutionNote: row.resolution_note,
+    reviewedAt: row.reviewed_at,
+    lastSeenAt: row.last_seen_at,
+    detectedAt: row.detected_at,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function getConflictDetectionData(): Promise<ConflictData> {
   const supabase = await createSupabaseServerClient();
-  const [studentsResult, assignmentsResult, competitionsResult] =
+  const [studentsResult, assignmentsResult, competitionsResult, reviewRecordsResult] =
     await Promise.all([
       supabase
         .from("students")
@@ -129,6 +159,37 @@ export async function getConflictDetectionData(): Promise<ConflictData> {
         .from("competitions")
         .select("id,name,short_name,color,status")
         .order("name", { ascending: true }),
+      supabase
+        .from("conflict_records")
+        .select(
+          `
+            id,
+            conflict_key,
+            conflict_type,
+            severity,
+            status,
+            primary_competition_id,
+            primary_activity_id,
+            conflicting_competition_id,
+            conflicting_activity_id,
+            student_id,
+            team_id,
+            summary,
+            details,
+            conflict_start_date,
+            conflict_end_date,
+            teacher_note,
+            resolution_note,
+            reviewed_at,
+            last_seen_at,
+            detected_at,
+            resolved_at,
+            created_at,
+            updated_at
+          `,
+        )
+        .eq("conflict_type", "student_overlap")
+        .order("updated_at", { ascending: false }),
     ]);
 
   if (studentsResult.error) {
@@ -149,6 +210,12 @@ export async function getConflictDetectionData(): Promise<ConflictData> {
     );
   }
 
+  if (reviewRecordsResult.error) {
+    throw new Error(
+      `Unable to load conflict review records: ${reviewRecordsResult.error.message}`,
+    );
+  }
+
   return {
     students: ((studentsResult.data ?? []) as unknown as ConflictStudentRow[]).map(
       mapStudent,
@@ -159,5 +226,8 @@ export async function getConflictDetectionData(): Promise<ConflictData> {
     competitions: (
       (competitionsResult.data ?? []) as unknown as ConflictCompetitionRow[]
     ).map(mapCompetition),
+    reviewRecords: (
+      (reviewRecordsResult.data ?? []) as unknown as ConflictReviewRecordRow[]
+    ).map(mapReviewRecord),
   };
 }
