@@ -64,6 +64,18 @@ competitions.id
 
 This supports any number of competitions and keeps participation queryable without string parsing.
 
+## Student Profile
+
+Student school profile fields live on `students` because they describe the student independently of any competition.
+
+- `student_code` stores an optional stable student identifier or school-issued code.
+- `class_name` stores an optional class, homeroom, section, or cohort label.
+- `grade_level` stores an optional grade, year, or level.
+- `parent_contact` stores optional parent or guardian contact details for coordinator follow-up.
+- `notes` stores internal notes or remarks.
+
+Class, grade/year, and parent contact should not be squeezed into `student_code`. Competition membership still belongs in `student_competitions`, not in profile columns.
+
 ## Activity Participation
 
 Activities belong to one competition. Students join activities through `activity_participants`.

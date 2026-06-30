@@ -17,9 +17,12 @@ Follow-up migrations:
 ```text
 supabase/migrations/002_enable_rls_and_basic_policies.sql
 supabase/migrations/003_add_competition_metadata.sql
+supabase/migrations/004_add_student_profile_fields.sql
 ```
 
 Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
+
+Migration `004_add_student_profile_fields.sql` adds generic student profile fields for class filtering, timeline context, reports, and future conflict review. These fields are student attributes, not competition participation flags.
 
 ## Tables
 
@@ -72,15 +75,25 @@ Key columns:
 - `first_name text`
 - `last_name text`
 - `display_name text`
+- `class_name text`
 - `grade_level text`
 - `email text`
 - `phone text`
 - `guardian_name text`
 - `guardian_contact text`
+- `parent_contact text`
 - `status text`
 - `notes text`
 - `created_at timestamptz`
 - `updated_at timestamptz`
+
+Profile columns:
+
+- `student_code` is an optional stable student identifier or school-issued student code.
+- `class_name` is an optional class, homeroom, section, or cohort label for filtering and reports.
+- `grade_level` is an optional grade, year, or level for filtering, timeline grouping, reports, and conflict review.
+- `parent_contact` is an optional parent or guardian contact field for coordinator follow-up.
+- `notes` stores internal notes or remarks about the student record.
 
 ### `student_competitions`
 
@@ -268,7 +281,7 @@ Competition-specific configuration should stay tied to competition data when add
 The migration adds indexes for common filters and conflict checks:
 
 - Competition status, teacher, category, and date range lookups.
-- Student status, name, and grade lookups.
+- Student status, name, class, and grade lookups.
 - Student-to-competition lookups in both directions.
 - Activity competition and schedule-time lookups.
 - Activity participant lookups by activity, student, and competition.

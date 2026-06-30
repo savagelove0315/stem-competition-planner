@@ -58,11 +58,13 @@ export type Student = {
   firstName: string;
   lastName: string;
   displayName: string | null;
+  className: string | null;
   gradeLevel: string | null;
   email: string | null;
   phone: string | null;
   guardianName: string | null;
   guardianContact: string | null;
+  parentContact: string | null;
   status: StudentStatus;
   notes: string | null;
   createdAt: Timestamp;
