@@ -297,7 +297,11 @@ Competition-specific configuration should stay tied to competition data when add
 
 Current app-level settings:
 
-- `parent_notice_defaults` stores default wording and teacher information for generated parent notices in `setting_value` JSON. The generated notices themselves are not stored.
+- `competition_notice_defaults` stores default wording and teacher information for generated competition participation notices in `setting_value` JSON.
+- `training_notice_defaults` stores default wording, teacher information, and default what-to-bring text for generated training notices in `setting_value` JSON.
+- `parent_notice_defaults` is a legacy fallback key for older parent notice settings. It is kept for backward compatibility and is not deleted by the app.
+
+Generated notices themselves are not stored.
 
 ## Indexes
 

@@ -1,5 +1,6 @@
 import type {
-  NoticeSettings,
+  CompetitionNoticeSettings,
+  TrainingNoticeSettings,
 } from "@/features/notice-settings/types";
 import type {
   NoticeCompetition,
@@ -12,8 +13,6 @@ import type {
 } from "./types";
 
 const EMPTY_NOTICE_VALUE = "To be announced";
-export const DEFAULT_TRAINING_WHAT_TO_BRING =
-  "Water bottle, stationery, competition materials, and any required devices.";
 
 export function getNoticeStudentName(
   student: Pick<NoticeStudent, "name" | "studentCode">,
@@ -186,26 +185,23 @@ export function buildTrainingNoticeText({
   activity,
   student,
   whatToBring,
-  teacherDisplayName,
-  teacherRoleLabel,
+  settings,
 }: {
   activity: TrainingNoticeActivity;
   student: TrainingNoticeStudent;
   whatToBring: string;
-  teacherDisplayName: string;
-  teacherRoleLabel: string;
+  settings: TrainingNoticeSettings;
 }) {
   const studentName = getTrainingNoticeStudentName(student);
 
   return [
-    "OFFICIAL NOTICE",
-    "训练通知",
-    "Training Notice",
+    settings.officialNoticeLabel,
+    settings.noticeTitleChinese,
+    settings.noticeSubtitleEnglish,
     "",
-    "亲爱的家长：",
-    "您好。",
+    settings.openingGreeting,
     "",
-    `谨此通知，${studentName} 同学需要参加以下训练：`,
+    settings.mainSentenceTemplate.replaceAll("{studentName}", studentName),
     "",
     `训练项目 / Training Activity: ${activity.name}`,
     `相关比赛 / Competition: ${formatNoticeField(activity.competition?.name ?? null)}`,
@@ -214,18 +210,20 @@ export function buildTrainingNoticeText({
     `地点 / Venue: ${formatNoticeField(activity.location)}`,
     `需携带物品 / What to Bring: ${formatNoticeField(whatToBring)}`,
     "",
-    "请家长提醒孩子准时出席训练，并携带所需物品。",
-    "感谢您的配合与支持。",
+    settings.reminderLine,
+    settings.thankYouLine,
     "",
-    teacherDisplayName,
-    teacherRoleLabel,
+    settings.teacherDisplayName,
+    settings.teacherRoleLabel,
+    "",
+    settings.footerNote,
   ].join("\n");
 }
 
 export function buildNoticeText(
   student: NoticeStudent,
   assignments: NoticeCompetitionAssignment[],
-  settings: NoticeSettings,
+  settings: CompetitionNoticeSettings,
 ) {
   const studentName = getNoticeStudentName(student);
   const rows = assignments.map((assignment, index) => {
@@ -239,7 +237,7 @@ export function buildNoticeText(
   });
 
   return [
-    "OFFICIAL NOTICE",
+    settings.officialNoticeLabel,
     settings.noticeTitleChinese,
     settings.noticeSubtitleEnglish,
     "",

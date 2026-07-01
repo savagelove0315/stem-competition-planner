@@ -7,14 +7,13 @@ import { NoticeActions } from "@/components/notices/notice-actions";
 import { TrainingActivitySelector } from "@/components/notices/training-activity-selector";
 import { TrainingNoticePreview } from "@/components/notices/training-notice-preview";
 import { Button } from "@/components/ui/button";
-import type { NoticeSettings } from "@/features/notice-settings/types";
+import type { TrainingNoticeSettings } from "@/features/notice-settings/types";
 import type {
   TrainingNoticeActivity,
   TrainingNoticeStudent,
 } from "@/features/notices/types";
 import {
   buildTrainingNoticeText,
-  DEFAULT_TRAINING_WHAT_TO_BRING,
   formatNoticeField,
   formatTrainingNoticeDate,
   formatTrainingNoticeTime,
@@ -22,7 +21,7 @@ import {
 
 type TrainingNoticeGeneratorProps = {
   activities: TrainingNoticeActivity[];
-  settings: NoticeSettings;
+  settings: TrainingNoticeSettings;
 };
 
 function EmptyPreviewState({
@@ -79,7 +78,7 @@ export function TrainingNoticeGenerator({
 }: TrainingNoticeGeneratorProps) {
   const [selectedActivityId, setSelectedActivityId] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
-  const [whatToBring, setWhatToBring] = useState("");
+  const [whatToBring, setWhatToBring] = useState(settings.defaultWhatToBring);
   const selectedActivity = useMemo(
     () =>
       activities.find((activity) => activity.id === selectedActivityId) ?? null,
@@ -99,7 +98,7 @@ export function TrainingNoticeGenerator({
     [participants, selectedStudentIds],
   );
   const resolvedWhatToBring =
-    whatToBring.trim() || DEFAULT_TRAINING_WHAT_TO_BRING;
+    whatToBring.trim() || settings.defaultWhatToBring;
   const noticeText =
     selectedActivity && selectedStudents.length > 0
       ? selectedStudents
@@ -108,8 +107,7 @@ export function TrainingNoticeGenerator({
               activity: selectedActivity,
               student,
               whatToBring: resolvedWhatToBring,
-              teacherDisplayName: settings.teacherDisplayName,
-              teacherRoleLabel: settings.teacherRoleLabel,
+              settings,
             }),
           )
           .join("\n\n---\n\n")
@@ -266,7 +264,7 @@ export function TrainingNoticeGenerator({
                 value={whatToBring}
                 onChange={(event) => setWhatToBring(event.target.value)}
                 className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal leading-6 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder={DEFAULT_TRAINING_WHAT_TO_BRING}
+                placeholder={settings.defaultWhatToBring}
               />
             </label>
           </section>

@@ -1,5 +1,8 @@
 import { NoticeGeneratorWorkspace } from "@/components/notices/notice-generator-workspace";
-import { getNoticeSettings } from "@/features/notice-settings/queries";
+import {
+  getCompetitionNoticeSettings,
+  getTrainingNoticeSettings,
+} from "@/features/notice-settings/queries";
 import {
   listNoticeStudents,
   listTrainingNoticeActivities,
@@ -9,10 +12,16 @@ import { requireUser } from "@/lib/auth/require-user";
 export default async function NoticesPage() {
   await requireUser("/notices");
 
-  const [students, trainingActivities, settings] = await Promise.all([
+  const [
+    students,
+    trainingActivities,
+    competitionSettings,
+    trainingSettings,
+  ] = await Promise.all([
     listNoticeStudents(),
     listTrainingNoticeActivities(),
-    getNoticeSettings({ fallbackOnError: true }),
+    getCompetitionNoticeSettings({ fallbackOnError: true }),
+    getTrainingNoticeSettings({ fallbackOnError: true }),
   ]);
 
   return (
@@ -34,7 +43,8 @@ export default async function NoticesPage() {
       <NoticeGeneratorWorkspace
         students={students}
         trainingActivities={trainingActivities}
-        settings={settings}
+        competitionSettings={competitionSettings}
+        trainingSettings={trainingSettings}
       />
     </section>
   );

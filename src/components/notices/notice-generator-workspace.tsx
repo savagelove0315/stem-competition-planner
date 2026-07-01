@@ -4,7 +4,10 @@ import { useState } from "react";
 
 import { ParentNoticeGenerator } from "@/components/notices/parent-notice-generator";
 import { TrainingNoticeGenerator } from "@/components/notices/training-notice-generator";
-import type { NoticeSettings } from "@/features/notice-settings/types";
+import type {
+  CompetitionNoticeSettings,
+  TrainingNoticeSettings,
+} from "@/features/notice-settings/types";
 import type {
   NoticeStudent,
   TrainingNoticeActivity,
@@ -14,7 +17,8 @@ import { cn } from "@/lib/utils";
 type NoticeGeneratorWorkspaceProps = {
   students: NoticeStudent[];
   trainingActivities: TrainingNoticeActivity[];
-  settings: NoticeSettings;
+  competitionSettings: CompetitionNoticeSettings;
+  trainingSettings: TrainingNoticeSettings;
 };
 
 type NoticeType = "competition" | "training";
@@ -39,7 +43,8 @@ const noticeTypes: Array<{
 export function NoticeGeneratorWorkspace({
   students,
   trainingActivities,
-  settings,
+  competitionSettings,
+  trainingSettings,
 }: NoticeGeneratorWorkspaceProps) {
   const [noticeType, setNoticeType] = useState<NoticeType>("competition");
 
@@ -70,11 +75,14 @@ export function NoticeGeneratorWorkspace({
       </div>
 
       {noticeType === "competition" ? (
-        <ParentNoticeGenerator students={students} settings={settings} />
+        <ParentNoticeGenerator
+          students={students}
+          settings={competitionSettings}
+        />
       ) : (
         <TrainingNoticeGenerator
           activities={trainingActivities}
-          settings={settings}
+          settings={trainingSettings}
         />
       )}
     </div>

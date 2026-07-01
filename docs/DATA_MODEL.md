@@ -142,7 +142,13 @@ If the product later needs configurable status workflows, these can move to look
 
 Competition-specific settings should be modeled through competition-related tables when those needs are known.
 
-The `parent_notice_defaults` setting stores default Parent Notice Generator wording and teacher information. It affects preview, copy, and browser print output, but it does not store generated notice records.
+Notice settings are split by notice purpose:
+
+- `competition_notice_defaults` stores default Competition Notice Generator wording and teacher information.
+- `training_notice_defaults` stores default Training Notice Generator wording, teacher information, and default what-to-bring text.
+- `parent_notice_defaults` is retained as a legacy fallback key for existing settings.
+
+These settings affect preview, copy, and browser print output, but they do not store generated notice records.
 
 ## Deliberate Omissions
 

@@ -7,13 +7,13 @@ import { BulkNoticeGenerator } from "@/components/notices/bulk-notice-generator"
 import { NoticeActions } from "@/components/notices/notice-actions";
 import { NoticeStudentSelector } from "@/components/notices/notice-student-selector";
 import { ParentNoticePreview } from "@/components/notices/parent-notice-preview";
-import type { NoticeSettings } from "@/features/notice-settings/types";
+import type { CompetitionNoticeSettings } from "@/features/notice-settings/types";
 import type { NoticeStudent } from "@/features/notices/types";
 import { buildNoticeText } from "@/features/notices/utils";
 
 type ParentNoticeGeneratorProps = {
   students: NoticeStudent[];
-  settings: NoticeSettings;
+  settings: CompetitionNoticeSettings;
 };
 
 type NoticeMode = "single" | "bulk";

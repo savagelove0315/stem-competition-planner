@@ -1,4 +1,4 @@
-import type { NoticeSettings } from "@/features/notice-settings/types";
+import type { TrainingNoticeSettings } from "@/features/notice-settings/types";
 import type {
   TrainingNoticeActivity,
   TrainingNoticeStudent,
@@ -13,7 +13,7 @@ import {
 type TrainingNoticePreviewProps = {
   activity: TrainingNoticeActivity;
   student: TrainingNoticeStudent;
-  settings: NoticeSettings;
+  settings: TrainingNoticeSettings;
   whatToBring: string;
 };
 
@@ -24,6 +24,9 @@ export function TrainingNoticePreview({
   whatToBring,
 }: TrainingNoticePreviewProps) {
   const studentName = getTrainingNoticeStudentName(student);
+  const [mainSentenceBeforeName, ...mainSentenceAfterName] =
+    settings.mainSentenceTemplate.split("{studentName}");
+  const openingGreetingLines = settings.openingGreeting.split("\n");
   const detailRows = [
     ["训练项目 / Training Activity", activity.name],
     ["相关比赛 / Competition", formatNoticeField(activity.competition?.name ?? null)],
@@ -37,26 +40,27 @@ export function TrainingNoticePreview({
     <article className="notice-print-area notice-page overflow-hidden rounded-lg border bg-card shadow-sm">
       <header className="notice-header bg-slate-900 px-6 py-5 text-white md:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.16em]">
-          OFFICIAL NOTICE
+          {settings.officialNoticeLabel}
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-normal md:text-4xl">
-          训练通知
+          {settings.noticeTitleChinese}
         </h2>
         <p className="mt-2 text-sm text-slate-200 md:text-base">
-          Training Notice
+          {settings.noticeSubtitleEnglish}
         </p>
       </header>
 
       <div className="notice-content flex flex-col gap-6 p-6 md:p-8">
         <div className="text-base leading-8">
-          <p>亲爱的家长：</p>
-          <p>您好。</p>
+          {openingGreetingLines.map((line, index) => (
+            <p key={`${line}-${index}`}>{line}</p>
+          ))}
         </div>
 
         <p className="notice-student-line rounded-md border border-primary/20 bg-primary/10 px-4 py-3 text-base font-medium leading-8 text-foreground">
-          谨此通知，
+          {mainSentenceBeforeName}
           <span className="font-semibold text-primary">{studentName}</span>
-          同学需要参加以下训练：
+          {mainSentenceAfterName.join("{studentName}")}
         </p>
 
         <div className="notice-table-wrapper rounded-md border">
@@ -79,8 +83,8 @@ export function TrainingNoticePreview({
         </div>
 
         <div className="notice-message rounded-md border bg-muted/40 px-4 py-4 text-base leading-8">
-          <p>请家长提醒孩子准时出席训练，并携带所需物品。</p>
-          <p>感谢您的配合与支持。</p>
+          <p>{settings.reminderLine}</p>
+          <p>{settings.thankYouLine}</p>
         </div>
 
         <div className="pt-2">
@@ -89,6 +93,10 @@ export function TrainingNoticePreview({
             {settings.teacherRoleLabel}
           </p>
         </div>
+
+        <footer className="border-t pt-4 text-xs text-muted-foreground">
+          {settings.footerNote}
+        </footer>
       </div>
     </article>
   );

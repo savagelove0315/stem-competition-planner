@@ -5,13 +5,13 @@ import { useMemo, useState } from "react";
 import { BulkStudentSelector } from "@/components/notices/bulk-student-selector";
 import { NoticeActions } from "@/components/notices/notice-actions";
 import { ParentNoticePreview } from "@/components/notices/parent-notice-preview";
-import type { NoticeSettings } from "@/features/notice-settings/types";
+import type { CompetitionNoticeSettings } from "@/features/notice-settings/types";
 import type { NoticeStudent } from "@/features/notices/types";
 import { buildNoticeText } from "@/features/notices/utils";
 
 type BulkNoticeGeneratorProps = {
   students: NoticeStudent[];
-  settings: NoticeSettings;
+  settings: CompetitionNoticeSettings;
 };
 
 function EmptyBulkState({

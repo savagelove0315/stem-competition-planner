@@ -43,16 +43,15 @@ export default async function SettingsPage() {
             </span>
             <div>
               <p className="text-sm font-medium text-primary">Available</p>
-              <h2 className="mt-1 text-lg font-semibold">
-                Parent Notice Settings
-              </h2>
+              <h2 className="mt-1 text-lg font-semibold">Notice Settings</h2>
             </div>
           </div>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            Configure teacher name, notice wording, and footer text.
+            Configure competition and training notice wording, teacher names,
+            and footer text.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/settings/notices">Open Parent Notice Settings</Link>
+            <Link href="/settings/notices">Open Notice Settings</Link>
           </Button>
         </section>
 

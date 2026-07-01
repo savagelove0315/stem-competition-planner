@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import type {
-  NoticeSettings,
+  CompetitionNoticeSettings,
 } from "@/features/notice-settings/types";
 import type {
   NoticeCompetitionAssignment,
@@ -17,7 +17,7 @@ import {
 type ParentNoticePreviewProps = {
   student: NoticeStudent | null;
   assignments: NoticeCompetitionAssignment[];
-  settings: NoticeSettings;
+  settings: CompetitionNoticeSettings;
 };
 
 function EmptyNoticeState({
@@ -72,7 +72,7 @@ export function ParentNoticePreview({
     <article className="notice-print-area notice-page overflow-hidden rounded-lg border bg-card shadow-sm">
       <header className="notice-header bg-slate-900 px-6 py-5 text-white md:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.16em]">
-          OFFICIAL NOTICE
+          {settings.officialNoticeLabel}
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-normal md:text-4xl">
           {settings.noticeTitleChinese}
