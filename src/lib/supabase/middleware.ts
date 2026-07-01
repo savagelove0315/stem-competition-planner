@@ -4,6 +4,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicEnv } from "./env";
 
 const publicRoutes = new Set(["/login", "/api/health/supabase"]);
+const protectedRoutes = [
+  "/dashboard",
+  "/competitions",
+  "/students",
+  "/activities",
+  "/timeline",
+  "/student-timeline",
+  "/conflicts",
+  "/notices",
+  "/settings",
+  "/teams",
+  "/reports",
+];
 
 function getSafeNextPath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
@@ -18,6 +31,12 @@ function isPublicRoute(pathname: string): boolean {
     publicRoutes.has(pathname) ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"
+  );
+}
+
+function isProtectedRoute(pathname: string): boolean {
+  return protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
 
@@ -48,11 +67,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
-  if (!user && !isPublicRoute(pathname)) {
+  if (!user && !isPublicRoute(pathname) && isProtectedRoute(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(redirectUrl, 307);
   }
 
   if (user && pathname === "/login") {
