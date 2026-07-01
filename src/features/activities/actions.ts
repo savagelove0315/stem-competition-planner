@@ -85,6 +85,81 @@ function toActivityPayload(values: ActivityFormValues) {
   };
 }
 
+type ActivityDeleteSafety = {
+  activeParticipantCount: number;
+  conflictRecordCount: number;
+};
+
+async function getActivityDeleteSafety(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  activityId: string,
+): Promise<ActivityDeleteSafety> {
+  const [activeParticipants, conflictRecords] = await Promise.all([
+    supabase
+      .from("activity_participants")
+      .select("id", { count: "exact", head: true })
+      .eq("activity_id", activityId)
+      .neq("status", "cancelled"),
+    supabase
+      .from("conflict_records")
+      .select("id", { count: "exact", head: true })
+      .or(`primary_activity_id.eq.${activityId},conflicting_activity_id.eq.${activityId}`),
+  ]);
+
+  const firstError = [activeParticipants, conflictRecords].find(
+    (check) => check.error,
+  )?.error;
+
+  if (firstError) {
+    throw new Error(firstError.message);
+  }
+
+  return {
+    activeParticipantCount: activeParticipants.count ?? 0,
+    conflictRecordCount: conflictRecords.count ?? 0,
+  };
+}
+
+function getActivityDeleteBlockedMessage({
+  activeParticipantCount,
+  conflictRecordCount,
+}: ActivityDeleteSafety): string | null {
+  if (activeParticipantCount > 0) {
+    return "This activity still has participants. Remove participants first or cancel/archive the activity.";
+  }
+
+  if (conflictRecordCount > 0) {
+    return "This activity appears in conflict records. Clear those records first or cancel/archive the activity.";
+  }
+
+  return null;
+}
+
+async function deleteInactiveActivityJoins(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  activityId: string,
+) {
+  const { error } = await supabase
+    .from("activity_participants")
+    .delete()
+    .eq("activity_id", activityId)
+    .eq("status", "cancelled");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+function revalidateActivitySurfaces() {
+  revalidatePath("/activities");
+  revalidatePath("/student-timeline");
+  revalidatePath("/timeline");
+  revalidatePath("/conflicts");
+  revalidatePath("/notices");
+  revalidatePath("/reports");
+  revalidatePath("/dashboard");
+}
+
 export async function createActivityAction(
   _previousState: ActivityActionState,
   formData: FormData,
@@ -108,7 +183,7 @@ export async function createActivityAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/activities");
+    revalidateActivitySurfaces();
     return { status: "success", message: "Activity added." };
   } catch (error) {
     return {
@@ -148,7 +223,7 @@ export async function updateActivityAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/activities");
+    revalidateActivitySurfaces();
     return { status: "success", message: "Activity updated." };
   } catch (error) {
     return {
@@ -195,7 +270,7 @@ async function updateActivityStatus(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/activities");
+    revalidateActivitySurfaces();
     return { status: "success", message: successMessage };
   } catch (error) {
     return {
@@ -204,6 +279,49 @@ async function updateActivityStatus(
         error instanceof Error
           ? error.message
           : "Unable to update activity status.",
+    };
+  }
+}
+
+export async function deleteActivityAction(
+  _previousState: ActivityActionState,
+  formData: FormData,
+): Promise<ActivityActionState> {
+  const id = activityIdSchema.safeParse(formData.get("id"));
+
+  if (!id.success) {
+    return { status: "error", message: "Invalid activity id." };
+  }
+
+  try {
+    const supabase = await requireAuthenticatedClient();
+    const deleteSafety = await getActivityDeleteSafety(supabase, id.data);
+    const blockedMessage = getActivityDeleteBlockedMessage(deleteSafety);
+
+    if (blockedMessage) {
+      return { status: "error", message: blockedMessage };
+    }
+
+    await deleteInactiveActivityJoins(supabase, id.data);
+
+    const { error } = await supabase
+      .from("activities")
+      .delete()
+      .eq("id", id.data);
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    revalidateActivitySurfaces();
+    return { status: "success", message: "Activity deleted." };
+  } catch (error) {
+    console.error("Activity delete failed", error);
+
+    return {
+      status: "error",
+      message:
+        "Unexpected database error while deleting the activity. Please try again or cancel/archive the activity instead.",
     };
   }
 }

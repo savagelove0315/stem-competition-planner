@@ -2,7 +2,7 @@
 
 import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, Ban, ListChecks, Pencil, X } from "lucide-react";
+import { Archive, Ban, ListChecks, Pencil, Trash2, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { ActivityForm } from "@/components/activities/activity-form";
@@ -15,6 +15,7 @@ import type {
 import {
   archiveActivityAction,
   cancelActivityAction,
+  deleteActivityAction,
   type ActivityActionState,
 } from "@/features/activities/actions";
 import type {
@@ -43,6 +44,11 @@ type EditActivityModalProps = {
 };
 
 const initialStatusState: ActivityActionState = {
+  status: "idle",
+  message: null,
+};
+
+const initialDeleteState: ActivityActionState = {
   status: "idle",
   message: null,
 };
@@ -128,6 +134,59 @@ function StatusActionForm({ activity, actionType }: StatusActionFormProps) {
       <StatusSubmitButton actionType={actionType} disabled={disabled} />
       {state.status === "error" && state.message ? (
         <p className="max-w-48 text-xs text-destructive">{state.message}</p>
+      ) : null}
+    </form>
+  );
+}
+
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      variant="outline"
+      size="sm"
+      className="border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15"
+      disabled={pending}
+    >
+      <Trash2 aria-hidden="true" />
+      {pending ? "Deleting" : "Delete"}
+    </Button>
+  );
+}
+
+function DeleteActivityForm({ activity }: { activity: ActivityWithCompetition }) {
+  const [state, formAction] = useActionState(
+    deleteActivityAction,
+    initialDeleteState,
+  );
+
+  return (
+    <form
+      action={formAction}
+      className="grid gap-2"
+      onSubmit={(event) => {
+        if (
+          !window.confirm(
+            "Delete this activity permanently? This cannot be undone.",
+          )
+        ) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="id" value={activity.id} />
+      <DeleteSubmitButton />
+      {state.message ? (
+        <p
+          className={cn(
+            "max-w-64 text-xs",
+            state.status === "success" ? "text-primary" : "text-destructive",
+          )}
+        >
+          {state.message}
+        </p>
       ) : null}
     </form>
   );
@@ -343,6 +402,9 @@ export function ActivityList({
                         </Button>
                         <StatusActionForm activity={activity} actionType="cancel" />
                         <StatusActionForm activity={activity} actionType="archive" />
+                        <div className="border-l pl-2">
+                          <DeleteActivityForm activity={activity} />
+                        </div>
                       </div>
                     </td>
                   </tr>

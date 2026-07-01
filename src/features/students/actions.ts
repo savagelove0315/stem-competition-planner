@@ -93,6 +93,13 @@ type StudentCompetitionSyncError = {
   message: string;
 };
 
+type StudentDeleteSafety = {
+  activeCompetitionCount: number;
+  activeActivityParticipantCount: number;
+  conflictRecordCount: number;
+  teamMemberCount: number;
+};
+
 function isDuplicateStudentEmailError(error: { code?: string; message: string }) {
   return (
     error.code === "23505" &&
@@ -180,6 +187,118 @@ async function syncStudentCompetitions(
   return null;
 }
 
+async function getStudentDeleteSafety(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  studentId: string,
+): Promise<StudentDeleteSafety> {
+  const [
+    activeCompetitions,
+    activeActivityParticipants,
+    conflictRecords,
+    teamMembers,
+  ] = await Promise.all([
+    supabase
+      .from("student_competitions")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId)
+      .neq("status", "withdrawn"),
+    supabase
+      .from("activity_participants")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId)
+      .neq("status", "cancelled"),
+    supabase
+      .from("conflict_records")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId),
+    supabase
+      .from("team_members")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", studentId),
+  ]);
+
+  const checks = [
+    activeCompetitions,
+    activeActivityParticipants,
+    conflictRecords,
+    teamMembers,
+  ];
+  const firstError = checks.find((check) => check.error)?.error;
+
+  if (firstError) {
+    throw new Error(firstError.message);
+  }
+
+  return {
+    activeCompetitionCount: activeCompetitions.count ?? 0,
+    activeActivityParticipantCount: activeActivityParticipants.count ?? 0,
+    conflictRecordCount: conflictRecords.count ?? 0,
+    teamMemberCount: teamMembers.count ?? 0,
+  };
+}
+
+function getStudentDeleteBlockedMessage({
+  activeCompetitionCount,
+  activeActivityParticipantCount,
+  conflictRecordCount,
+  teamMemberCount,
+}: StudentDeleteSafety): string | null {
+  if (activeCompetitionCount > 0) {
+    return "This student is still registered in competitions. Withdraw the student first or archive the student.";
+  }
+
+  if (activeActivityParticipantCount > 0) {
+    return "This student has activity participation records. Remove the student from activities first or archive the student.";
+  }
+
+  if (teamMemberCount > 0) {
+    return "This student has team membership records. Remove the student from teams first or archive the student.";
+  }
+
+  if (conflictRecordCount > 0) {
+    return "This student appears in conflict records. Clear those records first or archive the student.";
+  }
+
+  return null;
+}
+
+async function deleteInactiveStudentJoins(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  studentId: string,
+) {
+  const [cancelledParticipants, withdrawnCompetitions] = await Promise.all([
+    supabase
+      .from("activity_participants")
+      .delete()
+      .eq("student_id", studentId)
+      .eq("status", "cancelled"),
+    supabase
+      .from("student_competitions")
+      .delete()
+      .eq("student_id", studentId)
+      .eq("status", "withdrawn"),
+  ]);
+
+  const firstError = [cancelledParticipants, withdrawnCompetitions].find(
+    (result) => result.error,
+  )?.error;
+
+  if (firstError) {
+    throw new Error(firstError.message);
+  }
+}
+
+function revalidateStudentSurfaces() {
+  revalidatePath("/students");
+  revalidatePath("/activities");
+  revalidatePath("/student-timeline");
+  revalidatePath("/timeline");
+  revalidatePath("/conflicts");
+  revalidatePath("/notices");
+  revalidatePath("/reports");
+  revalidatePath("/dashboard");
+}
+
 export async function createStudentAction(
   _previousState: StudentActionState,
   formData: FormData,
@@ -222,7 +341,7 @@ export async function createStudentAction(
       return { status: "error", message: assignmentError.message };
     }
 
-    revalidatePath("/students");
+    revalidateStudentSurfaces();
     return { status: "success", message: "Student added." };
   } catch (error) {
     return {
@@ -277,7 +396,7 @@ export async function updateStudentAction(
       return { status: "error", message: assignmentError.message };
     }
 
-    revalidatePath("/students");
+    revalidateStudentSurfaces();
     return { status: "success", message: "Student updated." };
   } catch (error) {
     return {
@@ -312,13 +431,56 @@ export async function archiveStudentAction(
       };
     }
 
-    revalidatePath("/students");
+    revalidateStudentSurfaces();
     return { status: "success", message: "Student archived." };
   } catch (error) {
     return {
       status: "error",
       message:
         error instanceof Error ? error.message : "Unable to archive student.",
+    };
+  }
+}
+
+export async function deleteStudentAction(
+  _previousState: StudentActionState,
+  formData: FormData,
+): Promise<StudentActionState> {
+  const id = studentIdSchema.safeParse(formData.get("id"));
+
+  if (!id.success) {
+    return { status: "error", message: "Invalid student id." };
+  }
+
+  try {
+    const supabase = await requireAuthenticatedClient();
+    const deleteSafety = await getStudentDeleteSafety(supabase, id.data);
+    const blockedMessage = getStudentDeleteBlockedMessage(deleteSafety);
+
+    if (blockedMessage) {
+      return { status: "error", message: blockedMessage };
+    }
+
+    await deleteInactiveStudentJoins(supabase, id.data);
+
+    const { error } = await supabase
+      .from("students")
+      .delete()
+      .eq("id", id.data);
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    revalidateStudentSurfaces();
+    return { status: "success", message: "Student deleted." };
+  } catch (error) {
+    console.error("Student delete failed", error);
+
+    return {
+      status: "error",
+      message:
+        "Unexpected database error while deleting the student. Please try again or archive the student instead.",
     };
   }
 }

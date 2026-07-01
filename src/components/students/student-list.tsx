@@ -2,13 +2,14 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
-import { Archive, ListChecks, Pencil, Users, X } from "lucide-react";
+import { Archive, ListChecks, Pencil, Trash2, Users, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { StudentForm } from "@/components/students/student-form";
 import { Button } from "@/components/ui/button";
 import {
   archiveStudentAction,
+  deleteStudentAction,
   type StudentActionState,
 } from "@/features/students/actions";
 import type {
@@ -24,6 +25,11 @@ type StudentListProps = {
 };
 
 const initialArchiveState: StudentActionState = {
+  status: "idle",
+  message: null,
+};
+
+const initialDeleteState: StudentActionState = {
   status: "idle",
   message: null,
 };
@@ -69,6 +75,59 @@ function ArchiveStudentForm({ student }: { student: StudentWithCompetitions }) {
       <ArchiveSubmitButton disabled={isArchived} />
       {state.status === "error" && state.message ? (
         <p className="max-w-48 text-xs text-destructive">{state.message}</p>
+      ) : null}
+    </form>
+  );
+}
+
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      variant="outline"
+      size="sm"
+      className="border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15"
+      disabled={pending}
+    >
+      <Trash2 aria-hidden="true" />
+      {pending ? "Deleting" : "Delete"}
+    </Button>
+  );
+}
+
+function DeleteStudentForm({ student }: { student: StudentWithCompetitions }) {
+  const [state, formAction] = useActionState(
+    deleteStudentAction,
+    initialDeleteState,
+  );
+
+  return (
+    <form
+      action={formAction}
+      className="grid gap-2"
+      onSubmit={(event) => {
+        if (
+          !window.confirm(
+            "Delete this student permanently? This cannot be undone.",
+          )
+        ) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="id" value={student.id} />
+      <DeleteSubmitButton />
+      {state.message ? (
+        <p
+          className={cn(
+            "max-w-64 text-xs",
+            state.status === "success" ? "text-primary" : "text-destructive",
+          )}
+        >
+          {state.message}
+        </p>
       ) : null}
     </form>
   );
@@ -243,6 +302,9 @@ export function StudentList({
                           Edit
                         </Button>
                         <ArchiveStudentForm student={student} />
+                        <div className="border-l pl-2">
+                          <DeleteStudentForm student={student} />
+                        </div>
                       </div>
                     </td>
                   </tr>
