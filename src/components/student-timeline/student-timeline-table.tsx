@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import type {
   StudentTimelineCellActivity,
   StudentTimelineViewModel,
@@ -69,6 +72,9 @@ export function StudentTimelineTable({ viewModel }: StudentTimelineTableProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Assign students to activities before using the student timeline.
         </p>
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/activities">Go to Activity Master</Link>
+        </Button>
       </section>
     );
   }

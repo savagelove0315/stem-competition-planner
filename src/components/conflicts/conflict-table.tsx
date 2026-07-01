@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 
 import { ConflictReviewActions } from "@/components/conflicts/conflict-review-actions";
+import { Button } from "@/components/ui/button";
 import type {
   ActivityConflictSide,
   ConflictDetectionSeverity,
@@ -93,6 +95,14 @@ export function ConflictTable({ viewModel }: ConflictTableProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Assign students to activities before using conflict detection.
         </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/activities">Go to Activity Master</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/student-timeline">View Student Timeline</Link>
+          </Button>
+        </div>
       </section>
     );
   }
@@ -104,6 +114,14 @@ export function ConflictTable({ viewModel }: ConflictTableProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           No conflicts detected for the selected filters.
         </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/activities">Go to Activity Master</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/student-timeline">View Student Timeline</Link>
+          </Button>
+        </div>
       </section>
     );
   }

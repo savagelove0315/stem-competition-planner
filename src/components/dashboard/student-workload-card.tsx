@@ -1,5 +1,7 @@
 import { UserRoundCheck } from "lucide-react";
+import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import type { StudentWorkloadOverview } from "@/features/dashboard/types";
 
 type StudentWorkloadCardProps = {
@@ -24,10 +26,15 @@ export function StudentWorkloadCard({
       </div>
 
       {students.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">
-          {hasStudents
-            ? "No high-involvement students yet."
-            : "No students registered yet."}
+        <div className="p-6">
+          <p className="text-sm text-muted-foreground">
+            {hasStudents
+              ? "No high-involvement students yet. Register students under competitions and assign activities to build workload data."
+              : "No students yet. Add students or register them under competitions to begin workload tracking."}
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link href="/students">Manage Students</Link>
+          </Button>
         </div>
       ) : (
         <div className="divide-y">

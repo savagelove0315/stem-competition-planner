@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
-import { Archive, Ban, Pencil, X } from "lucide-react";
+import Link from "next/link";
+import { Archive, Ban, ListChecks, Pencil, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { ActivityForm } from "@/components/activities/activity-form";
@@ -217,7 +218,8 @@ export function ActivityList({
       <section className="rounded-lg border border-dashed bg-card p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold">No activities yet</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          No activities yet. Add your first activity to start building the planner.
+          Create activities after setting up competitions. Once activities
+          exist, assign participants so timelines and conflict checks can run.
         </p>
       </section>
     );
@@ -225,12 +227,20 @@ export function ActivityList({
 
   return (
     <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
-      <div className="border-b px-5 py-4">
-        <h2 className="text-lg font-semibold">Activity records</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Activities are loaded from Supabase and linked to dynamic competition
-          records.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h2 className="text-lg font-semibold">Activity records</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Activities are loaded from Supabase and linked to dynamic competition
+            records.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/student-timeline">
+            <ListChecks aria-hidden="true" />
+            View Student Timeline
+          </Link>
+        </Button>
       </div>
 
       <div className="w-full min-w-0 overflow-x-auto">

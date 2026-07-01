@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useActionState, useState } from "react";
-import { Archive, Pencil } from "lucide-react";
+import Link from "next/link";
+import { Archive, ListChecks, Pencil, Users } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { StudentForm } from "@/components/students/student-form";
@@ -84,7 +85,8 @@ export function StudentList({
       <section className="rounded-lg border border-dashed bg-card p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold">No students yet</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          No students yet. Add your first student to start planning.
+          Add students here, then register them under competitions so timelines,
+          conflicts, and notices have usable data.
         </p>
       </section>
     );
@@ -92,12 +94,28 @@ export function StudentList({
 
   return (
     <section className="overflow-hidden rounded-lg border bg-card shadow-sm">
-      <div className="border-b px-5 py-4">
-        <h2 className="text-lg font-semibold">Student records</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Competition assignments are loaded from the student competition join
-          table.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h2 className="text-lg font-semibold">Student records</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Competition assignments are loaded from the student competition join
+            table.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/student-timeline">
+              <ListChecks aria-hidden="true" />
+              View Timeline
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/competitions">
+              <Users aria-hidden="true" />
+              Register to Competition
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

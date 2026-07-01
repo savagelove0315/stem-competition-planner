@@ -1,5 +1,7 @@
 import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import type { CompetitionOverview } from "@/features/dashboard/types";
 
 type CompetitionOverviewCardProps = {
@@ -24,10 +26,15 @@ export function CompetitionOverviewCard({
       </div>
 
       {competitions.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">
-          {hasCompetitions
-            ? "No active or planned competitions."
-            : "No competitions yet."}
+        <div className="p-6">
+          <p className="text-sm text-muted-foreground">
+            {hasCompetitions
+              ? "No active or planned competitions. Check completed or archived records on the competitions page."
+              : "No competitions yet. Create a competition first so students, activities, and notices have a shared planning record."}
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link href="/competitions">Manage Competitions</Link>
+          </Button>
         </div>
       ) : (
         <div className="divide-y">

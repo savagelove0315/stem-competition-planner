@@ -34,7 +34,8 @@ export function NoticeStudentSelector({
           ))}
         </select>
         <p className="text-xs leading-5 text-muted-foreground">
-          Notices are generated from registered competitions only.
+          Choose a student with competition registrations. Students without
+          registrations need roster setup first.
         </p>
       </div>
     </section>

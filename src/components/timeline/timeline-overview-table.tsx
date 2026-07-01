@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import type {
   TimelineCellActivity,
   TimelineViewModel,
@@ -46,8 +49,12 @@ export function TimelineOverviewTable({
       <section className="rounded-lg border border-dashed bg-card p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold">No activities found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          No activities found for the selected timeline filters.
+          Create activities after setting up competitions, then return here to
+          review the timeline.
         </p>
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/activities">Go to Activity Master</Link>
+        </Button>
       </section>
     );
   }

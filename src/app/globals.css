@@ -198,6 +198,14 @@
     width: 28%;
   }
 
+  body.printing-notice .notice-training-label {
+    width: 34%;
+  }
+
+  body.printing-notice .notice-training-value {
+    width: 66%;
+  }
+
   body.printing-notice .notice-message {
     background: #f8fafc !important;
     border-color: #d8dee8 !important;
@@ -207,6 +215,7 @@
   body.printing-notice a,
   body.printing-notice button,
   body.printing-notice input,
+  body.printing-notice textarea,
   body.printing-notice select {
     display: none !important;
   }

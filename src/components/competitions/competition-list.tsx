@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Archive, Pencil, Users, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
@@ -168,7 +169,8 @@ export function CompetitionList({
       <section className="rounded-lg border border-dashed bg-card p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold">No competitions yet</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          No competitions yet. Add your first competition to start planning.
+          Create a competition first. Students, activities, timelines,
+          conflicts, and notices all connect back to competition records.
         </p>
       </section>
     );
@@ -176,11 +178,19 @@ export function CompetitionList({
 
   return (
     <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
-      <div className="border-b px-5 py-4">
-        <h2 className="text-lg font-semibold">Competition records</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Names and statuses are loaded from Supabase for the signed-in session.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h2 className="text-lg font-semibold">Competition records</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Names and statuses are loaded from Supabase for the signed-in session.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/students">
+            <Users aria-hidden="true" />
+            Manage Students
+          </Link>
+        </Button>
       </div>
 
       <div className="w-full min-w-0 overflow-x-auto">

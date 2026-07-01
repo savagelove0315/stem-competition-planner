@@ -38,7 +38,7 @@ function AddStudentButton({ disabled }: { disabled: boolean }) {
       ) : (
         <UserPlus aria-hidden="true" />
       )}
-      {pending ? "Adding" : "Add"}
+      {pending ? "Adding" : "Register Student"}
     </Button>
   );
 }
@@ -53,7 +53,7 @@ function WithdrawStudentButton() {
       ) : (
         <UserMinus aria-hidden="true" />
       )}
-      {pending ? "Removing" : "Remove"}
+      {pending ? "Withdrawing" : "Withdraw"}
     </Button>
   );
 }
@@ -185,7 +185,8 @@ export function CompetitionStudentManager({
         </div>
       ) : (
         <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-          No students registered for this competition yet.
+          No students registered for this competition yet. Register students
+          here before assigning them to activities or generating notices.
         </p>
       )}
 

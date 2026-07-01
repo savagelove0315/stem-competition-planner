@@ -16,7 +16,8 @@ export default async function NoticeSettingsPage() {
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground md:text-base">
             Configure the default wording and teacher information used by the
-            Parent Notice Generator.
+            Parent Notice Generator. Notice content is generated from
+            competition registrations; no generated notices are saved here.
           </p>
         </div>
       </div>

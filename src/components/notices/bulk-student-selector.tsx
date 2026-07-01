@@ -69,6 +69,7 @@ export function BulkStudentSelector({
         <h2 className="text-lg font-semibold">Bulk student selection</h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
           Select active students, then preview or print one notice per student.
+          Students without competition registrations are skipped.
         </p>
       </div>
 
@@ -205,7 +206,8 @@ export function BulkStudentSelector({
       <div className="mt-5 max-h-[28rem] overflow-y-auto rounded-md border">
         {students.length === 0 ? (
           <div className="p-5 text-sm text-muted-foreground">
-            No students found.
+            No students found. Add students and register them under
+            competitions before generating notices.
           </div>
         ) : visibleStudents.length === 0 ? (
           <div className="p-5 text-sm text-muted-foreground">

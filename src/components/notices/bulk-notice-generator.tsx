@@ -66,7 +66,7 @@ export function BulkNoticeGenerator({
           <section className="rounded-lg border border-secondary/40 bg-secondary/10 p-4 text-sm shadow-sm">
             <h2 className="font-semibold">Skipped from print preview</h2>
             <p className="mt-1 leading-6">
-              These selected students do not have registered competitions:
+              These selected students do not have registered competitions yet:
             </p>
             <p className="mt-2 leading-6">
               {skippedStudents.map((student) => student.name).join(", ")}
@@ -85,12 +85,12 @@ export function BulkNoticeGenerator({
       {selectedStudents.length === 0 ? (
         <EmptyBulkState
           title="No students selected"
-          message="Select one or more students to generate bulk parent notices."
+          message="Select one or more students with competition registrations to generate bulk parent notices."
         />
       ) : printableStudents.length === 0 ? (
         <EmptyBulkState
           title="Selected students have no registered competitions"
-          message="Choose students with active competition registrations before printing notices."
+          message="Register students under competitions first, then return here to print notices."
         />
       ) : (
         <div className="notice-print-scope flex min-w-0 flex-col gap-6">

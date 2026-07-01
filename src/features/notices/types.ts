@@ -1,4 +1,9 @@
-import type { StudentCompetitionStatus, StudentStatus } from "@/types/database";
+import type {
+  ActivityParticipantStatus,
+  ActivityStatus,
+  StudentCompetitionStatus,
+  StudentStatus,
+} from "@/types/database";
 
 export type NoticeCompetition = {
   id: string;
@@ -62,4 +67,77 @@ export type NoticeStudentRow = {
   grade_level: string | null;
   status: StudentStatus;
   student_competitions: NoticeStudentCompetitionRow[] | null;
+};
+
+export type TrainingNoticeCompetition = {
+  id: string;
+  name: string;
+  shortName: string | null;
+  color: string | null;
+};
+
+export type TrainingNoticeStudent = {
+  id: string;
+  studentCode: string | null;
+  name: string;
+  className: string | null;
+  gradeLevel: string | null;
+  status: StudentStatus;
+  assignmentId: string;
+  assignmentStatus: ActivityParticipantStatus;
+};
+
+export type TrainingNoticeActivity = {
+  id: string;
+  competitionId: string;
+  name: string;
+  activityType: string | null;
+  status: ActivityStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  location: string | null;
+  competition: TrainingNoticeCompetition | null;
+  participants: TrainingNoticeStudent[];
+};
+
+export type TrainingNoticeActivityFilters = {
+  competitionId: string;
+  activityType: string;
+  search: string;
+};
+
+export type TrainingNoticeActivityRow = {
+  id: string;
+  competition_id: string;
+  name: string;
+  activity_type: string | null;
+  status: ActivityStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+  location: string | null;
+  competitions: {
+    id: string;
+    name: string;
+    short_name: string | null;
+    color: string | null;
+  } | null;
+};
+
+export type TrainingNoticeParticipantRow = {
+  id: string;
+  activity_id: string;
+  student_id: string;
+  status: ActivityParticipantStatus;
+  assigned_at: string;
+};
+
+export type TrainingNoticeStudentRow = {
+  id: string;
+  student_code: string | null;
+  first_name: string;
+  last_name: string;
+  display_name: string | null;
+  class_name: string | null;
+  grade_level: string | null;
+  status: StudentStatus;
 };

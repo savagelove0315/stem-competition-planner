@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import type {
   NoticeSettings,
 } from "@/features/notice-settings/types";
@@ -28,6 +31,11 @@ function EmptyNoticeState({
     <section className="rounded-lg border border-dashed bg-card p-8 text-center shadow-sm">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{message}</p>
+      {title === "No registered competitions" ? (
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/competitions">Go to Competition Roster</Link>
+        </Button>
+      ) : null}
     </section>
   );
 }
@@ -50,7 +58,7 @@ export function ParentNoticePreview({
     return (
       <EmptyNoticeState
         title="No registered competitions"
-        message="This student does not have active competition registrations yet."
+        message="This student does not have active competition registrations yet. Register the student under a competition first."
       />
     );
   }

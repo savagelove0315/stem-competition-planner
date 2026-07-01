@@ -38,7 +38,7 @@ function AddParticipantButton({ disabled }: { disabled: boolean }) {
       ) : (
         <UserPlus aria-hidden="true" />
       )}
-      {pending ? "Adding" : "Add"}
+      {pending ? "Adding" : "Assign Student"}
     </Button>
   );
 }
@@ -53,7 +53,7 @@ function RemoveParticipantButton() {
       ) : (
         <UserMinus aria-hidden="true" />
       )}
-      {pending ? "Removing" : "Remove"}
+      {pending ? "Removing" : "Remove Student"}
     </Button>
   );
 }
@@ -141,7 +141,7 @@ export function ActivityParticipantsManager({
         <div className="flex items-center gap-2">
           <Users className="size-4 text-muted-foreground" aria-hidden="true" />
           <div>
-            <h3 className="text-sm font-semibold">Participants</h3>
+            <h3 className="text-sm font-semibold">Assign participants</h3>
             <p className="text-xs text-muted-foreground">
               {participants.length} assigned student
               {participants.length === 1 ? "" : "s"}
@@ -180,7 +180,8 @@ export function ActivityParticipantsManager({
         </div>
       ) : (
         <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-          No students assigned yet.
+          No students assigned yet. Register students under this activity&apos;s
+          competition first, then assign them here.
         </p>
       )}
 

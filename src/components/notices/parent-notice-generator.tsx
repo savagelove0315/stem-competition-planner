@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Info } from "lucide-react";
 
 import { BulkNoticeGenerator } from "@/components/notices/bulk-notice-generator";
 import { NoticeActions } from "@/components/notices/notice-actions";
@@ -35,6 +36,20 @@ export function ParentNoticeGenerator({
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <section className="notice-print-hidden rounded-lg border bg-card p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <Info className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+          <div>
+            <h2 className="text-sm font-semibold">Notice source data</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Notices are generated from competition registrations. Register
+              students under competitions before generating single or bulk
+              notices.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div className="notice-print-hidden flex flex-wrap gap-2 rounded-lg border bg-card p-2 shadow-sm">
         <button
           type="button"

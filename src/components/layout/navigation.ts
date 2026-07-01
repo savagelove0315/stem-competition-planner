@@ -9,7 +9,6 @@ import {
   Mail,
   Settings,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 
 export const navigationItems = [
@@ -52,11 +51,6 @@ export const navigationItems = [
     title: "Notices",
     href: "/notices",
     icon: Mail,
-  },
-  {
-    title: "Teams",
-    href: "/teams",
-    icon: Users,
   },
   {
     title: "Reports",

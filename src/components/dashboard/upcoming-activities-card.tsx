@@ -1,5 +1,7 @@
 import { CalendarClock } from "lucide-react";
+import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import type { UpcomingActivityOverview } from "@/features/dashboard/types";
 
 type UpcomingActivitiesCardProps = {
@@ -51,10 +53,15 @@ export function UpcomingActivitiesCard({
       </div>
 
       {activities.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">
-          {hasActivities
-            ? "No upcoming activities with a future start date."
-            : "No activities yet."}
+        <div className="p-6">
+          <p className="text-sm text-muted-foreground">
+            {hasActivities
+              ? "No upcoming activities with a future start date. Check Activity Master for unscheduled or completed records."
+              : "No activities yet. Create activities after setting up competitions."}
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link href="/activities">Manage Activities</Link>
+          </Button>
         </div>
       ) : (
         <div className="divide-y">
