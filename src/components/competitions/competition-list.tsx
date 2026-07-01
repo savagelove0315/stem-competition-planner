@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, Pencil, Users, X } from "lucide-react";
+import { Archive, Pencil, Trash2, Users, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { CompetitionForm } from "@/components/competitions/competition-form";
@@ -14,6 +14,7 @@ import type {
 } from "@/features/competition-enrollments/queries";
 import {
   archiveCompetitionAction,
+  deleteCompetitionAction,
   type CompetitionActionState,
 } from "@/features/competitions/actions";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,17 @@ type CompetitionRosterModalProps = {
   onClose: () => void;
 };
 
+type CompetitionEditModalProps = {
+  competition: Competition;
+  onClose: () => void;
+};
+
 const initialArchiveState: CompetitionActionState = {
+  status: "idle",
+  message: null,
+};
+
+const initialDeleteState: CompetitionActionState = {
   status: "idle",
   message: null,
 };
@@ -75,6 +86,126 @@ function ArchiveCompetitionForm({ competition }: { competition: Competition }) {
         <p className="max-w-48 text-xs text-destructive">{state.message}</p>
       ) : null}
     </form>
+  );
+}
+
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      variant="outline"
+      size="sm"
+      className="border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15"
+      disabled={pending}
+    >
+      <Trash2 aria-hidden="true" />
+      {pending ? "Deleting" : "Delete"}
+    </Button>
+  );
+}
+
+function DeleteCompetitionForm({ competition }: { competition: Competition }) {
+  const [state, formAction] = useActionState(
+    deleteCompetitionAction,
+    initialDeleteState,
+  );
+
+  return (
+    <form
+      action={formAction}
+      className="grid gap-2"
+      onSubmit={(event) => {
+        if (
+          !window.confirm(
+            "Delete this competition permanently? This cannot be undone.",
+          )
+        ) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input type="hidden" name="id" value={competition.id} />
+      <DeleteSubmitButton />
+      {state.message ? (
+        <p
+          className={cn(
+            "max-w-64 text-xs",
+            state.status === "success" ? "text-primary" : "text-destructive",
+          )}
+        >
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
+function CompetitionEditModal({
+  competition,
+  onClose,
+}: CompetitionEditModalProps) {
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-background/80"
+        aria-label="Close edit competition dialog"
+        onClick={onClose}
+      />
+      <div
+        aria-labelledby="edit-competition-title"
+        aria-modal="true"
+        className="absolute left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-4 border-b px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            <h2 id="edit-competition-title" className="text-lg font-semibold">
+              Edit competition
+            </h2>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              {competition.name}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close edit competition dialog"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+        <div className="overflow-y-auto px-4 py-5 sm:px-6">
+          <CompetitionForm
+            mode="edit"
+            competition={competition}
+            onCancel={onClose}
+            showHeader={false}
+            surface="plain"
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -163,6 +294,10 @@ export function CompetitionList({
       null,
     [competitions, managingRosterId],
   );
+  const editingCompetition = useMemo(
+    () => competitions.find((competition) => competition.id === editingId) ?? null,
+    [competitions, editingId],
+  );
 
   if (competitions.length === 0) {
     return (
@@ -214,8 +349,7 @@ export function CompetitionList({
                 enrollmentsByCompetition.get(competition.id) ?? [];
 
               return (
-                <Fragment key={competition.id}>
-                  <tr className="align-top">
+                <tr key={competition.id} className="align-top">
                     <td className="px-4 py-4">
                       <div className="font-medium">{competition.name}</div>
                       {competition.description ? (
@@ -304,32 +438,18 @@ export function CompetitionList({
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            setEditingId((current) =>
-                              current === competition.id ? null : competition.id,
-                            )
-                          }
+                          onClick={() => setEditingId(competition.id)}
                         >
                           <Pencil aria-hidden="true" />
                           Edit
                         </Button>
                         <ArchiveCompetitionForm competition={competition} />
+                        <div className="border-l pl-2">
+                          <DeleteCompetitionForm competition={competition} />
+                        </div>
                       </div>
                     </td>
                   </tr>
-
-                  {editingId === competition.id ? (
-                    <tr>
-                      <td className="bg-muted/30 px-4 py-4" colSpan={9}>
-                        <CompetitionForm
-                          mode="edit"
-                          competition={competition}
-                          onCancel={() => setEditingId(null)}
-                        />
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
               );
             })}
           </tbody>
@@ -344,6 +464,13 @@ export function CompetitionList({
           }
           studentOptions={studentOptions}
           onClose={() => setManagingRosterId(null)}
+        />
+      ) : null}
+
+      {editingCompetition ? (
+        <CompetitionEditModal
+          competition={editingCompetition}
+          onClose={() => setEditingId(null)}
         />
       ) : null}
     </section>

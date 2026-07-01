@@ -78,6 +78,67 @@ function toCompetitionPayload(values: CompetitionFormValues) {
   };
 }
 
+async function countCompetitionRelatedRows(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  competitionId: string,
+) {
+  const [
+    studentCompetitions,
+    activities,
+    activityParticipants,
+    teams,
+    teamMembers,
+    primaryConflicts,
+    conflictingConflicts,
+  ] = await Promise.all([
+    supabase
+      .from("student_competitions")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("activities")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("activity_participants")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("teams")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("team_members")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("conflict_records")
+      .select("id", { count: "exact", head: true })
+      .eq("primary_competition_id", competitionId),
+    supabase
+      .from("conflict_records")
+      .select("id", { count: "exact", head: true })
+      .eq("conflicting_competition_id", competitionId),
+  ]);
+
+  const checks = [
+    studentCompetitions,
+    activities,
+    activityParticipants,
+    teams,
+    teamMembers,
+    primaryConflicts,
+    conflictingConflicts,
+  ];
+  const firstError = checks.find((check) => check.error)?.error;
+
+  if (firstError) {
+    throw new Error(firstError.message);
+  }
+
+  return checks.reduce((total, check) => total + (check.count ?? 0), 0);
+}
+
 export async function createCompetitionAction(
   _previousState: CompetitionActionState,
   formData: FormData,
@@ -177,6 +238,47 @@ export async function archiveCompetitionAction(
     return {
       status: "error",
       message: error instanceof Error ? error.message : "Unable to archive competition.",
+    };
+  }
+}
+
+export async function deleteCompetitionAction(
+  _previousState: CompetitionActionState,
+  formData: FormData,
+): Promise<CompetitionActionState> {
+  const id = competitionIdSchema.safeParse(formData.get("id"));
+
+  if (!id.success) {
+    return { status: "error", message: "Invalid competition id." };
+  }
+
+  try {
+    const supabase = await requireAuthenticatedClient();
+    const relatedRowCount = await countCompetitionRelatedRows(supabase, id.data);
+
+    if (relatedRowCount > 0) {
+      return {
+        status: "error",
+        message:
+          "This competition cannot be deleted because it already has students or activities. Archive it instead.",
+      };
+    }
+
+    const { error } = await supabase
+      .from("competitions")
+      .delete()
+      .eq("id", id.data);
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    revalidatePath("/competitions");
+    return { status: "success", message: "Competition deleted." };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unable to delete competition.",
     };
   }
 }

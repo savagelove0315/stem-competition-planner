@@ -11,12 +11,15 @@ import {
   type CompetitionActionState,
 } from "@/features/competitions/actions";
 import { competitionStatuses } from "@/features/competitions/schemas";
+import { cn } from "@/lib/utils";
 import type { Competition } from "@/types/database";
 
 type CompetitionFormProps = {
   mode: "create" | "edit";
   competition?: Competition;
   onCancel?: () => void;
+  showHeader?: boolean;
+  surface?: "card" | "plain";
 };
 
 const initialState: CompetitionActionState = {
@@ -65,6 +68,8 @@ export function CompetitionForm({
   mode,
   competition,
   onCancel,
+  showHeader = true,
+  surface = "card",
 }: CompetitionFormProps) {
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
@@ -98,18 +103,23 @@ export function CompetitionForm({
     <form
       ref={formRef}
       action={formAction}
-      className="grid gap-5 rounded-lg border bg-card p-5 shadow-sm"
+      className={cn(
+        "grid w-full gap-5",
+        surface === "card" && "rounded-lg border bg-card p-5 shadow-sm",
+      )}
     >
       {competition ? <input type="hidden" name="id" value={competition.id} /> : null}
 
-      <div>
-        <h2 className="text-lg font-semibold">
-          {mode === "create" ? "Add competition" : "Edit competition"}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configure a competition record that other planner workflows can use later.
-        </p>
-      </div>
+      {showHeader ? (
+        <div>
+          <h2 className="text-lg font-semibold">
+            {mode === "create" ? "Add competition" : "Edit competition"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Configure a competition record that other planner workflows can use later.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2 md:col-span-2">
@@ -120,7 +130,7 @@ export function CompetitionForm({
             id={fieldIds.name}
             name="name"
             defaultValue={competition?.name ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.name} />
         </div>
@@ -133,7 +143,7 @@ export function CompetitionForm({
             id={fieldIds.shortName}
             name="shortName"
             defaultValue={competition?.shortName ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.shortName} />
         </div>
@@ -146,7 +156,7 @@ export function CompetitionForm({
             id={fieldIds.status}
             name="status"
             defaultValue={competition?.status ?? "draft"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             {competitionStatuses.map((status) => (
               <option key={status} value={status}>
@@ -161,7 +171,7 @@ export function CompetitionForm({
           <label className="text-sm font-medium" htmlFor={fieldIds.color}>
             Color
           </label>
-          <div className="flex gap-2">
+          <div className="flex w-full gap-2">
             <input
               aria-label="Competition color picker"
               type="color"
@@ -193,7 +203,7 @@ export function CompetitionForm({
             name="icon"
             defaultValue={competition?.icon ?? ""}
             placeholder="Optional icon token"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.icon} />
         </div>
@@ -206,7 +216,7 @@ export function CompetitionForm({
             id={fieldIds.category}
             name="category"
             defaultValue={competition?.category ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.category} />
         </div>
@@ -220,7 +230,7 @@ export function CompetitionForm({
             name="noticeMode"
             defaultValue={competition?.noticeMode ?? ""}
             placeholder="Optional parent-facing mode"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.noticeMode} />
         </div>
@@ -234,7 +244,7 @@ export function CompetitionForm({
             name="noticePeriod"
             defaultValue={competition?.noticePeriod ?? ""}
             placeholder="Optional flexible display such as Date to be announced"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.noticePeriod} />
         </div>
@@ -248,7 +258,7 @@ export function CompetitionForm({
             name="startsAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.startsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.startsAt} />
         </div>
@@ -262,7 +272,7 @@ export function CompetitionForm({
             name="endsAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.endsAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.endsAt} />
         </div>
@@ -279,7 +289,7 @@ export function CompetitionForm({
             name="registrationOpensAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.registrationOpensAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.registrationOpensAt} />
         </div>
@@ -296,7 +306,7 @@ export function CompetitionForm({
             name="registrationClosesAt"
             type="datetime-local"
             defaultValue={toDateTimeInputValue(competition?.registrationClosesAt)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.registrationClosesAt} />
         </div>
@@ -310,7 +320,7 @@ export function CompetitionForm({
             name="description"
             rows={3}
             defaultValue={competition?.description ?? ""}
-            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.description} />
         </div>
@@ -324,7 +334,7 @@ export function CompetitionForm({
             name="notes"
             rows={3}
             defaultValue={competition?.notes ?? ""}
-            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.notes} />
         </div>
