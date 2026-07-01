@@ -78,65 +78,72 @@ function toCompetitionPayload(values: CompetitionFormValues) {
   };
 }
 
-async function countCompetitionRelatedRows(
+type CompetitionDeleteSafety = {
+  activeEnrollmentCount: number;
+  activityCount: number;
+};
+
+async function getCompetitionDeleteSafety(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
   competitionId: string,
-) {
-  const [
-    studentCompetitions,
-    activities,
-    activityParticipants,
-    teams,
-    teamMembers,
-    primaryConflicts,
-    conflictingConflicts,
-  ] = await Promise.all([
+): Promise<CompetitionDeleteSafety> {
+  const [activeEnrollments, activities] = await Promise.all([
     supabase
       .from("student_competitions")
       .select("id", { count: "exact", head: true })
-      .eq("competition_id", competitionId),
+      .eq("competition_id", competitionId)
+      .neq("status", "withdrawn"),
     supabase
       .from("activities")
       .select("id", { count: "exact", head: true })
       .eq("competition_id", competitionId),
-    supabase
-      .from("activity_participants")
-      .select("id", { count: "exact", head: true })
-      .eq("competition_id", competitionId),
-    supabase
-      .from("teams")
-      .select("id", { count: "exact", head: true })
-      .eq("competition_id", competitionId),
-    supabase
-      .from("team_members")
-      .select("id", { count: "exact", head: true })
-      .eq("competition_id", competitionId),
-    supabase
-      .from("conflict_records")
-      .select("id", { count: "exact", head: true })
-      .eq("primary_competition_id", competitionId),
-    supabase
-      .from("conflict_records")
-      .select("id", { count: "exact", head: true })
-      .eq("conflicting_competition_id", competitionId),
   ]);
 
-  const checks = [
-    studentCompetitions,
-    activities,
-    activityParticipants,
-    teams,
-    teamMembers,
-    primaryConflicts,
-    conflictingConflicts,
-  ];
+  const checks = [activeEnrollments, activities];
   const firstError = checks.find((check) => check.error)?.error;
 
   if (firstError) {
     throw new Error(firstError.message);
   }
 
-  return checks.reduce((total, check) => total + (check.count ?? 0), 0);
+  return {
+    activeEnrollmentCount: activeEnrollments.count ?? 0,
+    activityCount: activities.count ?? 0,
+  };
+}
+
+function getDeleteBlockedMessage({
+  activeEnrollmentCount,
+  activityCount,
+}: CompetitionDeleteSafety): string | null {
+  if (activeEnrollmentCount > 0 && activityCount > 0) {
+    return "This competition still has registered students and activities. Withdraw students and remove activities first, or archive the competition.";
+  }
+
+  if (activeEnrollmentCount > 0) {
+    return "This competition still has registered students. Withdraw students first or archive the competition.";
+  }
+
+  if (activityCount > 0) {
+    return "This competition has activities. Archive it instead, or remove the activities first.";
+  }
+
+  return null;
+}
+
+async function deleteWithdrawnCompetitionEnrollments(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  competitionId: string,
+) {
+  const { error } = await supabase
+    .from("student_competitions")
+    .delete()
+    .eq("competition_id", competitionId)
+    .eq("status", "withdrawn");
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function createCompetitionAction(
@@ -254,15 +261,17 @@ export async function deleteCompetitionAction(
 
   try {
     const supabase = await requireAuthenticatedClient();
-    const relatedRowCount = await countCompetitionRelatedRows(supabase, id.data);
+    const deleteSafety = await getCompetitionDeleteSafety(supabase, id.data);
+    const blockedMessage = getDeleteBlockedMessage(deleteSafety);
 
-    if (relatedRowCount > 0) {
+    if (blockedMessage) {
       return {
         status: "error",
-        message:
-          "This competition cannot be deleted because it already has students or activities. Archive it instead.",
+        message: blockedMessage,
       };
     }
+
+    await deleteWithdrawnCompetitionEnrollments(supabase, id.data);
 
     const { error } = await supabase
       .from("competitions")
@@ -276,9 +285,12 @@ export async function deleteCompetitionAction(
     revalidatePath("/competitions");
     return { status: "success", message: "Competition deleted." };
   } catch (error) {
+    console.error("Competition delete failed", error);
+
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Unable to delete competition.",
+      message:
+        "Unexpected database error while deleting the competition. Please try again or archive it instead.",
     };
   }
 }
