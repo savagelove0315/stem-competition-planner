@@ -27,7 +27,7 @@ export function MobileMenu() {
       </Button>
 
       {isOpen ? (
-        <div className="absolute left-0 right-0 top-16 border-b bg-card p-3 shadow-lg">
+        <div className="absolute left-0 right-0 top-16 max-h-[calc(100vh-7.5rem)] overflow-y-auto border-b bg-card p-3 shadow-lg">
           <nav className="grid gap-1 sm:grid-cols-2">
             {navigationItems.map((item) => {
               const Icon = item.icon;

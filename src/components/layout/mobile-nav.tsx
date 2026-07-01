@@ -10,7 +10,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="grid grid-cols-5 border-t bg-card lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-5 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden">
       {navigationItems.slice(0, 5).map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
