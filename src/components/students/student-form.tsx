@@ -15,12 +15,15 @@ import type {
   StudentCompetitionOption,
   StudentWithCompetitions,
 } from "@/features/students/queries";
+import { cn } from "@/lib/utils";
 
 type StudentFormProps = {
   mode: "create" | "edit";
   student?: StudentWithCompetitions;
   competitionOptions: StudentCompetitionOption[];
   onCancel?: () => void;
+  showHeader?: boolean;
+  surface?: "card" | "plain";
 };
 
 const initialState: StudentActionState = {
@@ -62,6 +65,8 @@ export function StudentForm({
   student,
   competitionOptions,
   onCancel,
+  showHeader = true,
+  surface = "card",
 }: StudentFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const action = mode === "create" ? createStudentAction : updateStudentAction;
@@ -82,18 +87,23 @@ export function StudentForm({
     <form
       ref={formRef}
       action={formAction}
-      className="grid gap-5 rounded-lg border bg-card p-5 shadow-sm"
+      className={cn(
+        "grid w-full gap-5",
+        surface === "card" && "rounded-lg border bg-card p-5 shadow-sm",
+      )}
     >
       {student ? <input type="hidden" name="id" value={student.id} /> : null}
 
-      <div>
-        <h2 className="text-lg font-semibold">
-          {mode === "create" ? "Add student" : "Edit student"}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Assign students to one or more competitions configured in settings.
-        </p>
-      </div>
+      {showHeader ? (
+        <div>
+          <h2 className="text-lg font-semibold">
+            {mode === "create" ? "Add student" : "Edit student"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Assign students to one or more competitions configured in settings.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
@@ -104,7 +114,7 @@ export function StudentForm({
             id={`${mode}-firstName`}
             name="firstName"
             defaultValue={student?.firstName ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.firstName} />
         </div>
@@ -117,7 +127,7 @@ export function StudentForm({
             id={`${mode}-lastName`}
             name="lastName"
             defaultValue={student?.lastName ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.lastName} />
         </div>
@@ -130,7 +140,7 @@ export function StudentForm({
             id={`${mode}-displayName`}
             name="displayName"
             defaultValue={student?.displayName ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.displayName} />
         </div>
@@ -143,7 +153,7 @@ export function StudentForm({
             id={`${mode}-studentCode`}
             name="studentCode"
             defaultValue={student?.studentCode ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.studentCode} />
         </div>
@@ -156,7 +166,7 @@ export function StudentForm({
             id={`${mode}-className`}
             name="className"
             defaultValue={student?.className ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.className} />
         </div>
@@ -169,7 +179,7 @@ export function StudentForm({
             id={`${mode}-gradeLevel`}
             name="gradeLevel"
             defaultValue={student?.gradeLevel ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.gradeLevel} />
         </div>
@@ -182,7 +192,7 @@ export function StudentForm({
             id={`${mode}-status`}
             name="status"
             defaultValue={student?.status ?? "active"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm capitalize outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             {studentStatuses.map((status) => (
               <option key={status} value={status}>
@@ -202,7 +212,7 @@ export function StudentForm({
             name="email"
             type="email"
             defaultValue={student?.email ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.email} />
         </div>
@@ -215,7 +225,7 @@ export function StudentForm({
             id={`${mode}-phone`}
             name="phone"
             defaultValue={student?.phone ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.phone} />
         </div>
@@ -231,7 +241,7 @@ export function StudentForm({
             id={`${mode}-guardianName`}
             name="guardianName"
             defaultValue={student?.guardianName ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.guardianName} />
         </div>
@@ -247,7 +257,7 @@ export function StudentForm({
             id={`${mode}-guardianContact`}
             name="guardianContact"
             defaultValue={student?.guardianContact ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.guardianContact} />
         </div>
@@ -263,7 +273,7 @@ export function StudentForm({
             id={`${mode}-parentContact`}
             name="parentContact"
             defaultValue={student?.parentContact ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.parentContact} />
         </div>
@@ -320,7 +330,7 @@ export function StudentForm({
             name="notes"
             rows={3}
             defaultValue={student?.notes ?? ""}
-            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.notes} />
         </div>
