@@ -3,10 +3,14 @@ import { Rows3, Table2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type {
+  TimelineDensity,
   TimelineFilters,
   TimelineViewMode,
 } from "@/features/timeline/types";
-import { buildTimelineViewHref } from "@/features/timeline/utils";
+import {
+  buildTimelineDensityHref,
+  buildTimelineViewHref,
+} from "@/features/timeline/utils";
 import { cn } from "@/lib/utils";
 
 type TimelineViewToggleProps = {
@@ -30,6 +34,24 @@ const options: Array<{
   },
 ];
 
+const densityOptions: Array<{
+  value: TimelineDensity;
+  label: string;
+}> = [
+  {
+    value: "comfortable",
+    label: "Comfortable",
+  },
+  {
+    value: "compact",
+    label: "Compact",
+  },
+  {
+    value: "mini",
+    label: "Mini",
+  },
+];
+
 export function TimelineViewToggle({ filters }: TimelineViewToggleProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -40,30 +62,68 @@ export function TimelineViewToggle({ filters }: TimelineViewToggleProps) {
           clashes are handled in Conflict Detection.
         </p>
       </div>
-      <div className="flex rounded-lg border bg-card p-1 shadow-sm">
-        {options.map((option) => {
-          const Icon = option.icon;
-          const isActive = filters.view === option.value;
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">View</span>
+          <div className="flex rounded-lg border bg-card p-1 shadow-sm">
+            {options.map((option) => {
+              const Icon = option.icon;
+              const isActive = filters.view === option.value;
 
-          return (
-            <Button
-              key={option.value}
-              type="button"
-              variant="ghost"
-              size="sm"
-              asChild
-              className={cn(
-                "rounded-md",
-                isActive ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "",
-              )}
-            >
-              <Link href={buildTimelineViewHref(filters, option.value)}>
-                <Icon aria-hidden="true" />
-                {option.label}
-              </Link>
-            </Button>
-          );
-        })}
+              return (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={cn(
+                    "rounded-md",
+                    isActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                      : "",
+                  )}
+                >
+                  <Link href={buildTimelineViewHref(filters, option.value)}>
+                    <Icon aria-hidden="true" />
+                    {option.label}
+                  </Link>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Density
+          </span>
+          <div className="flex rounded-lg border bg-card p-1 shadow-sm">
+            {densityOptions.map((option) => {
+              const isActive = filters.density === option.value;
+
+              return (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={cn(
+                    "rounded-md",
+                    isActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                      : "",
+                  )}
+                >
+                  <Link href={buildTimelineDensityHref(filters, option.value)}>
+                    {option.label}
+                  </Link>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ export function TimelineFilters({
   return (
     <form className="rounded-lg border bg-card p-5 shadow-sm">
       <input type="hidden" name="view" value={filters.view} />
+      <input type="hidden" name="density" value={filters.density} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

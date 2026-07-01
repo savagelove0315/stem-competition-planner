@@ -4,9 +4,11 @@ import type {
 } from "@/types/database";
 
 export type TimelineViewMode = "competition" | "activity";
+export type TimelineDensity = "comfortable" | "compact" | "mini";
 
 export type TimelineFilters = {
   view: TimelineViewMode;
+  density: TimelineDensity;
   month: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -80,6 +82,7 @@ export type TimelineRow = TimelineCompetitionRow | TimelineActivityRow;
 
 export type TimelineViewModel = {
   view: TimelineViewMode;
+  density: TimelineDensity;
   rows: TimelineRow[];
   dateColumns: TimelineDateColumn[];
   summary: {

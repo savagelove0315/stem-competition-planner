@@ -6,6 +6,7 @@ import type {
   TimelineCellActivity,
   TimelineCompetition,
   TimelineDateColumn,
+  TimelineDensity,
   TimelineFilters,
   TimelineRow,
   TimelineViewMode,
@@ -39,6 +40,7 @@ const monthValueSchema = z
 const timelineFilterSchema = z
   .object({
     view: z.enum(["competition", "activity"]).catch("competition"),
+    density: z.enum(["comfortable", "compact", "mini"]).catch("comfortable"),
     month: monthValueSchema,
     startDate: dateValueSchema,
     endDate: dateValueSchema,
@@ -54,6 +56,7 @@ const timelineFilterSchema = z
 
     return {
       view: value.view,
+      density: value.density,
       month,
       startDate,
       endDate,
@@ -68,6 +71,7 @@ export function parseTimelineFilters(
 ): TimelineFilters {
   return timelineFilterSchema.parse({
     view: getSearchParam(searchParams.view),
+    density: getSearchParam(searchParams.density),
     month: getSearchParam(searchParams.month),
     startDate: getSearchParam(searchParams.startDate),
     endDate: getSearchParam(searchParams.endDate),
@@ -148,6 +152,7 @@ export function buildTimelineViewModel({
 
   return {
     view: filters.view,
+    density: filters.density,
     rows,
     dateColumns,
     summary: {
@@ -179,6 +184,24 @@ export function buildTimelineViewHref(
 ) {
   const params = new URLSearchParams();
   params.set("view", view);
+  params.set("density", filters.density);
+  setOptionalParam(params, "month", filters.month);
+  setOptionalParam(params, "startDate", filters.startDate);
+  setOptionalParam(params, "endDate", filters.endDate);
+  setOptionalParam(params, "competitionId", filters.competitionId);
+  setOptionalParam(params, "activityStatus", filters.activityStatus);
+  setOptionalParam(params, "activityType", filters.activityType);
+
+  return `/timeline?${params.toString()}`;
+}
+
+export function buildTimelineDensityHref(
+  filters: TimelineFilters,
+  density: TimelineDensity,
+) {
+  const params = new URLSearchParams();
+  params.set("view", filters.view);
+  params.set("density", density);
   setOptionalParam(params, "month", filters.month);
   setOptionalParam(params, "startDate", filters.startDate);
   setOptionalParam(params, "endDate", filters.endDate);
