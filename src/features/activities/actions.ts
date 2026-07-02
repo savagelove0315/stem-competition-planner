@@ -87,52 +87,51 @@ function toActivityPayload(values: ActivityFormValues) {
 
 type ActivityDeleteSafety = {
   activeParticipantCount: number;
-  conflictRecordCount: number;
 };
 
 async function getActivityDeleteSafety(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
   activityId: string,
 ): Promise<ActivityDeleteSafety> {
-  const [activeParticipants, conflictRecords] = await Promise.all([
-    supabase
-      .from("activity_participants")
-      .select("id", { count: "exact", head: true })
-      .eq("activity_id", activityId)
-      .neq("status", "cancelled"),
-    supabase
-      .from("conflict_records")
-      .select("id", { count: "exact", head: true })
-      .or(`primary_activity_id.eq.${activityId},conflicting_activity_id.eq.${activityId}`),
-  ]);
+  const { count, error } = await supabase
+    .from("activity_participants")
+    .select("id", { count: "exact", head: true })
+    .eq("activity_id", activityId)
+    .neq("status", "cancelled");
 
-  const firstError = [activeParticipants, conflictRecords].find(
-    (check) => check.error,
-  )?.error;
-
-  if (firstError) {
-    throw new Error(firstError.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
   return {
-    activeParticipantCount: activeParticipants.count ?? 0,
-    conflictRecordCount: conflictRecords.count ?? 0,
+    activeParticipantCount: count ?? 0,
   };
 }
 
 function getActivityDeleteBlockedMessage({
   activeParticipantCount,
-  conflictRecordCount,
 }: ActivityDeleteSafety): string | null {
   if (activeParticipantCount > 0) {
     return "This activity still has participants. Remove participants first or cancel/archive the activity.";
   }
 
-  if (conflictRecordCount > 0) {
-    return "This activity appears in conflict records. Clear those records first or cancel/archive the activity.";
-  }
-
   return null;
+}
+
+async function deleteActivityConflictRecords(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  activityId: string,
+) {
+  const { error } = await supabase
+    .from("conflict_records")
+    .delete()
+    .or(`primary_activity_id.eq.${activityId},conflicting_activity_id.eq.${activityId}`);
+
+  if (error) {
+    throw new Error(
+      `Unable to clear old conflict records for this activity: ${error.message}`,
+    );
+  }
 }
 
 async function deleteInactiveActivityJoins(
@@ -146,7 +145,9 @@ async function deleteInactiveActivityJoins(
     .eq("status", "cancelled");
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(
+      `Unable to clear cancelled participant links for this activity: ${error.message}`,
+    );
   }
 }
 
@@ -302,6 +303,7 @@ export async function deleteActivityAction(
       return { status: "error", message: blockedMessage };
     }
 
+    await deleteActivityConflictRecords(supabase, id.data);
     await deleteInactiveActivityJoins(supabase, id.data);
 
     const { error } = await supabase
@@ -317,6 +319,14 @@ export async function deleteActivityAction(
     return { status: "success", message: "Activity deleted." };
   } catch (error) {
     console.error("Activity delete failed", error);
+
+    if (
+      error instanceof Error &&
+      (error.message.startsWith("Unable to clear old conflict records") ||
+        error.message.startsWith("Unable to clear cancelled participant links"))
+    ) {
+      return { status: "error", message: error.message };
+    }
 
     return {
       status: "error",
