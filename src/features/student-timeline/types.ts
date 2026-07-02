@@ -77,6 +77,7 @@ export type StudentTimelineCellActivity = {
   competitionLabel: string;
   competitionColor: string;
   activityType: string | null;
+  status: ActivityStatus | null;
   timeLabel: string | null;
 };
 

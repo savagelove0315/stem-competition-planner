@@ -316,6 +316,7 @@ function mapCellActivity(
     competitionLabel: competition?.shortName ?? competition?.name ?? "Competition",
     competitionColor: competition?.color ?? "#64748b",
     activityType: activity?.activityType ?? null,
+    status: activity?.status ?? null,
     timeLabel: formatTimeRange(activity?.startsAt ?? null, activity?.endsAt ?? null),
   };
 }
