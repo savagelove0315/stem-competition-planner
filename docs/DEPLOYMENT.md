@@ -68,7 +68,13 @@ Apply migrations from `supabase/migrations` in filename order:
 009_enhance_conflict_records_review.sql
 010_add_competition_notice_fields.sql
 011_reset_app_settings_rls_policies.sql
+012_add_team_management_safety.sql
+013_reset_team_rls_policies.sql
+014_add_competition_participation_mode.sql
+015_reset_conflict_records_rls_policies.sql
 ```
+
+Migrations `011`-`014` must be applied before deploying team management, participation mode, and activity assignment features. Migration `015` must be applied before relying on activity delete cleanup.
 
 After applying migrations:
 
@@ -76,7 +82,7 @@ After applying migrations:
 - Confirm RLS is enabled on protected app tables.
 - Confirm anonymous access is revoked from protected app tables.
 - Confirm authenticated access matches the current intended policy baseline.
-- Confirm app settings policies are active.
+- Confirm app settings, team, and conflict record policies are active.
 - Confirm no migration introduced competition-specific tables, columns, enum values, or policies.
 
 ## Supabase Auth URL Checklist
@@ -123,7 +129,7 @@ After deployment:
 - Signed-out protected pages redirect to `/login?next=...`.
 - Login returns to the intended page.
 - Logout works.
-- Refreshing a protected page keeps the session.
+- Refreshing a protected page keeps the client-side session state.
 - `/api/health/supabase` remains public and does not require sign-in.
 
 ## App Smoke Test Checklist
@@ -131,10 +137,15 @@ After deployment:
 After deployment, sign in with a test user and verify:
 
 - Dashboard loads.
+- Dashboard expandable competitions work.
+- Dashboard expandable activities work.
 - Competitions CRUD works.
 - Competition Student Roster works.
 - Students CRUD works.
+- Team management works.
 - Activities CRUD works.
+- Participation Mode works.
+- Activity create with students/teams works.
 - Activity Participants works.
 - Student Timeline works.
 - Timeline Overview works.
@@ -175,7 +186,7 @@ Check Supabase Auth Site URL and redirect URLs. Make sure local URLs and the dep
 
 ### Protected Pages Do Not Redirect
 
-Confirm middleware is deployed and that Supabase Auth cookies are being set. Retest in a clean browser session after signing out.
+The current app has no middleware or proxy layer. Confirm the protected page uses the app's client-side auth guard, the Supabase public environment variables are configured, and the browser session is signed out before retesting.
 
 ### Health Check Returns 503
 
@@ -183,7 +194,7 @@ Open `/api/health/supabase` and inspect the JSON diagnostics. Confirm the URL ho
 
 ### Auth Works Locally But Not On Vercel
 
-Confirm the Vercel environment variables are set for the same environment that was deployed. Production, Preview, and Development values are configured separately.
+Confirm the Vercel environment variables are set for the same environment that was deployed. Production, Preview, and Development values are configured separately. Because the app does not use middleware, also confirm the deployed client can initialize Supabase Auth with the public URL and anon/publishable key.
 
 ### Data Is Missing After Login
 
