@@ -15,6 +15,12 @@ function getSafeRedirectPath(value: string | null): string {
   return value;
 }
 
+function hasSupabaseAuthCookie(): boolean {
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie.startsWith("sb-") && cookie.includes("-auth-token="));
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -40,12 +46,18 @@ export function LoginForm() {
     }
 
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
-      setError(sessionError?.message ?? "Unable to confirm the signed-in session.");
+    if (userError || !user) {
+      setError(userError?.message ?? "Unable to confirm the signed-in user.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!hasSupabaseAuthCookie()) {
+      setError("Signed in, but the browser did not store the Supabase auth cookie.");
       setIsSubmitting(false);
       return;
     }

@@ -19,7 +19,12 @@ export async function requireUser(nextPath = "/dashboard"): Promise<User> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (error && error.name !== "AuthSessionMissingError") {
+    throw new Error(`Unable to verify the authenticated user: ${error.message}`);
+  }
 
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(getSafeNextPath(nextPath))}`);

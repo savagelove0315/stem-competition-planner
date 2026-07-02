@@ -1,22 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function LogoutButton() {
-  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   async function handleLogout() {
     setIsSigningOut(true);
     await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    window.location.assign("/login");
   }
 
   return (
