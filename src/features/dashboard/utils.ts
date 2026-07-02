@@ -43,6 +43,8 @@ export function buildDashboardViewModel(
   const upcomingActivities = getUpcomingActivities(
     data.activities,
     data.activityParticipants,
+    data.teams,
+    data.students,
     now,
   );
   const unresolvedConflicts = data.conflicts
@@ -90,9 +92,17 @@ export function buildDashboardViewModel(
 function getUpcomingActivities(
   activities: DashboardActivity[],
   participants: DashboardActivityParticipant[],
+  teams: DashboardTeam[],
+  students: DashboardStudent[],
   now: Date,
 ): UpcomingActivityOverview[] {
   const participantCounts = countBy(participants, (participant) => participant.activityId);
+  const participantsByActivity = groupBy(
+    participants,
+    (participant) => participant.activityId,
+  );
+  const teamsByCompetition = groupBy(teams, (team) => team.competitionId);
+  const studentsById = new Map(students.map((student) => [student.id, student]));
 
   return activities
     .filter((activity): activity is DashboardActivity & { startsAt: string } => {
@@ -106,10 +116,52 @@ function getUpcomingActivities(
       );
     })
     .sort((left, right) => left.startsAt.localeCompare(right.startsAt))
-    .map((activity) => ({
-      ...activity,
-      participantCount: participantCounts.get(activity.id) ?? 0,
-    }));
+    .map((activity) => {
+      const activityParticipants = participantsByActivity.get(activity.id) ?? [];
+      const activityParticipantIds = new Set(
+        activityParticipants.map((participant) => participant.studentId),
+      );
+      const teamGroups = (teamsByCompetition.get(activity.competitionId) ?? [])
+        .map((team) => ({
+          teamId: team.id,
+          teamName: team.name,
+          students: team.members
+            .filter((member) => activityParticipantIds.has(member.studentId))
+            .map((member) => studentsById.get(member.studentId))
+            .filter(
+              (student): student is DashboardStudent => student !== undefined,
+            )
+            .map(toUpcomingParticipant)
+            .sort((left, right) => left.name.localeCompare(right.name)),
+        }))
+        .filter((team) => team.students.length > 0)
+        .sort((left, right) => left.teamName.localeCompare(right.teamName));
+      const teamStudentIds = new Set(
+        teamGroups.flatMap((team) => team.students.map((student) => student.id)),
+      );
+      const unassignedStudents = activityParticipants
+        .filter((participant) => !teamStudentIds.has(participant.studentId))
+        .map((participant) => studentsById.get(participant.studentId))
+        .filter((student): student is DashboardStudent => student !== undefined)
+        .map(toUpcomingParticipant)
+        .sort((left, right) => left.name.localeCompare(right.name));
+
+      return {
+        ...activity,
+        participantCount: participantCounts.get(activity.id) ?? 0,
+        teamGroups,
+        unassignedStudents,
+      };
+    });
+}
+
+function toUpcomingParticipant(student: DashboardStudent) {
+  return {
+    id: student.id,
+    name: student.name,
+    className: student.className,
+    gradeLevel: student.gradeLevel,
+  };
 }
 
 function getCompetitionOverviews(

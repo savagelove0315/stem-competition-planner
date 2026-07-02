@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { CheckCircle2, Loader2, Save } from "lucide-react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { CheckCircle2, Loader2, Save, UsersRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import type { CompetitionEnrollment } from "@/features/competition-enrollments/queries";
 import {
   createActivityAction,
   updateActivityAction,
@@ -19,11 +21,15 @@ import {
   activityStatuses,
   activityTypes,
 } from "@/features/activities/schemas";
+import type { CompetitionTeam } from "@/features/teams/queries";
+import type { ParticipationMode } from "@/types/database";
 
 type ActivityFormProps = {
   mode: "create" | "edit";
   activity?: ActivityWithCompetition;
   competitionOptions: ActivityCompetitionOption[];
+  competitionEnrollments?: CompetitionEnrollment[];
+  competitionTeams?: CompetitionTeam[];
   onCancel?: () => void;
   onSuccess?: () => void;
 };
@@ -70,10 +76,18 @@ function FieldError({ errors }: { errors?: string[] }) {
   return <p className="text-xs text-destructive">{errors[0]}</p>;
 }
 
+const participationModeLabels: Record<ParticipationMode, string> = {
+  individual: "Individual",
+  team: "Team",
+  mixed: "Mixed",
+};
+
 export function ActivityForm({
   mode,
   activity,
   competitionOptions,
+  competitionEnrollments = [],
+  competitionTeams = [],
   onCancel,
   onSuccess,
 }: ActivityFormProps) {
@@ -81,6 +95,115 @@ export function ActivityForm({
   const router = useRouter();
   const action = mode === "create" ? createActivityAction : updateActivityAction;
   const [state, formAction] = useActionState(action, initialState);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState(
+    activity?.competitionId ?? "",
+  );
+  const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const selectedCompetition = useMemo(
+    () =>
+      competitionOptions.find(
+        (competition) => competition.id === selectedCompetitionId,
+      ) ?? null,
+    [competitionOptions, selectedCompetitionId],
+  );
+  const activeEnrollments = useMemo(
+    () =>
+      competitionEnrollments
+        .filter(
+          (enrollment) =>
+            enrollment.competitionId === selectedCompetitionId &&
+            enrollment.status !== "withdrawn" &&
+            enrollment.student?.status === "active",
+        )
+        .sort((left, right) =>
+          (left.student?.name ?? "").localeCompare(right.student?.name ?? ""),
+        ),
+    [competitionEnrollments, selectedCompetitionId],
+  );
+  const activeTeams = useMemo(
+    () =>
+      competitionTeams
+        .filter(
+          (team) =>
+            team.competitionId === selectedCompetitionId &&
+            team.status === "active",
+        )
+        .map((team) => ({
+          ...team,
+          members: team.members.filter(
+            (member) => member.student?.status === "active",
+          ),
+        })),
+    [competitionTeams, selectedCompetitionId],
+  );
+  const teamMemberStudentIds = useMemo(
+    () =>
+      new Set(
+        activeTeams.flatMap((team) =>
+          team.members.map((member) => member.studentId),
+        ),
+      ),
+    [activeTeams],
+  );
+  const unassignedEnrollments = useMemo(
+    () =>
+      activeEnrollments.filter(
+        (enrollment) => !teamMemberStudentIds.has(enrollment.studentId),
+      ),
+    [activeEnrollments, teamMemberStudentIds],
+  );
+  const selectableIndividualEnrollments =
+    selectedCompetition?.participationMode === "individual"
+      ? activeEnrollments
+      : unassignedEnrollments;
+  const selectedParticipantCount = useMemo(() => {
+    const participantIds = new Set(selectedStudentIds);
+
+    activeTeams.forEach((team) => {
+      if (!selectedTeamIds.has(team.id)) {
+        return;
+      }
+
+      team.members.forEach((member) => {
+        participantIds.add(member.studentId);
+      });
+    });
+
+    return participantIds.size;
+  }, [activeTeams, selectedStudentIds, selectedTeamIds]);
+  const showTeams =
+    mode === "create" &&
+    selectedCompetition !== null &&
+    selectedCompetition.participationMode !== "individual";
+  const showIndividualStudents =
+    mode === "create" &&
+    selectedCompetition !== null &&
+    (selectedCompetition.participationMode === "individual" ||
+      selectedCompetition.participationMode === "team" ||
+      selectedCompetition.participationMode === "mixed");
+
+  function toggleSetValue(
+    value: string,
+    checked: boolean,
+    setValues: React.Dispatch<React.SetStateAction<Set<string>>>,
+  ) {
+    setValues((currentValues) => {
+      const nextValues = new Set(currentValues);
+
+      if (checked) {
+        nextValues.add(value);
+      } else {
+        nextValues.delete(value);
+      }
+
+      return nextValues;
+    });
+  }
 
   useEffect(() => {
     if (state.status !== "success") {
@@ -91,6 +214,11 @@ export function ActivityForm({
 
     if (mode === "create") {
       formRef.current?.reset();
+      window.setTimeout(() => {
+        setSelectedCompetitionId("");
+        setSelectedTeamIds(new Set());
+        setSelectedStudentIds(new Set());
+      }, 0);
       return;
     }
 
@@ -140,6 +268,11 @@ export function ActivityForm({
             id={`${mode}-competitionId`}
             name="competitionId"
             defaultValue={activity?.competitionId ?? ""}
+            onChange={(event) => {
+              setSelectedCompetitionId(event.target.value);
+              setSelectedTeamIds(new Set());
+              setSelectedStudentIds(new Set());
+            }}
             className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">Choose a competition</option>
@@ -320,6 +453,141 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.notes} />
         </div>
       </div>
+
+      {mode === "create" && selectedCompetition ? (
+        <section className="grid gap-4 rounded-md border bg-background p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <UsersRound
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <h3 className="font-semibold">Assign participants</h3>
+                <span className="rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {participationModeLabels[selectedCompetition.participationMode]}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Optional during creation. You can still adjust participants after
+                the activity is saved.
+              </p>
+            </div>
+            <span className="rounded-md border bg-muted px-2 py-1 text-xs font-medium">
+              {selectedParticipantCount} selected
+            </span>
+          </div>
+
+          {showTeams ? (
+            <div className="grid gap-3">
+              <h4 className="text-sm font-medium">Teams</h4>
+              {activeTeams.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {activeTeams.map((team) => (
+                    <label
+                      key={team.id}
+                      className="grid cursor-pointer gap-2 rounded-md border p-3"
+                    >
+                      <span className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          name="teamIds"
+                          value={team.id}
+                          checked={selectedTeamIds.has(team.id)}
+                          onChange={(event) =>
+                            toggleSetValue(
+                              team.id,
+                              event.target.checked,
+                              setSelectedTeamIds,
+                            )
+                          }
+                          className="mt-0.5 size-4 rounded border-input"
+                        />
+                        <span className="min-w-0">
+                          <span className="block break-words font-medium">
+                            {team.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {team.members.length} active member
+                            {team.members.length === 1 ? "" : "s"}
+                          </span>
+                        </span>
+                      </span>
+                      <details className="pl-7 text-xs text-muted-foreground">
+                        <summary className="cursor-pointer">Members</summary>
+                        {team.members.length > 0 ? (
+                          <ul className="mt-2 grid gap-1">
+                            {team.members.map((member) => (
+                              <li key={member.id}>
+                                {member.student?.name ?? "Unknown student"}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="mt-2">No active members.</p>
+                        )}
+                      </details>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                  No active teams are available for this competition.
+                </p>
+              )}
+            </div>
+          ) : null}
+
+          {showIndividualStudents ? (
+            <div className="grid gap-3">
+              <h4 className="text-sm font-medium">
+                {selectedCompetition.participationMode === "individual"
+                  ? "Registered students"
+                  : "Individual / No team assigned"}
+              </h4>
+              {selectableIndividualEnrollments.length > 0 ? (
+                <div className="grid gap-2 md:grid-cols-2">
+                  {selectableIndividualEnrollments.map((enrollment) => (
+                    <label
+                      key={enrollment.id}
+                      className="flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        name="studentIds"
+                        value={enrollment.studentId}
+                        checked={selectedStudentIds.has(enrollment.studentId)}
+                        onChange={(event) =>
+                          toggleSetValue(
+                            enrollment.studentId,
+                            event.target.checked,
+                            setSelectedStudentIds,
+                          )
+                        }
+                        className="mt-0.5 size-4 rounded border-input"
+                      />
+                      <span className="min-w-0">
+                        <span className="block break-words font-medium">
+                          {enrollment.student?.name ?? "Unknown student"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {[enrollment.student?.className, enrollment.student?.gradeLevel]
+                            .filter(Boolean)
+                            .join(" / ") || "Registered student"}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                  No active registered students are available for this selection.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {competitionOptions.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">

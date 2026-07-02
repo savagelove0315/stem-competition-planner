@@ -7,7 +7,9 @@ import {
 import {
   listActivities,
 } from "@/features/activities/queries";
+import { listCompetitionEnrollments } from "@/features/competition-enrollments/queries";
 import { listCompetitions } from "@/features/competitions/queries";
+import { listCompetitionTeams } from "@/features/teams/queries";
 import { requireUser } from "@/lib/auth/require-user";
 
 export default async function ActivitiesPage() {
@@ -18,11 +20,15 @@ export default async function ActivitiesPage() {
     competitions,
     participantAssignments,
     participantStudentOptions,
+    competitionEnrollments,
+    competitionTeams,
   ] = await Promise.all([
     listActivities(),
     listCompetitions(),
     listActivityParticipants(),
     listActivityParticipantStudentOptions(),
+    listCompetitionEnrollments(),
+    listCompetitionTeams(),
   ]);
   const competitionOptions = competitions.map((competition) => ({
     id: competition.id,
@@ -48,7 +54,12 @@ export default async function ActivitiesPage() {
         </div>
       </div>
 
-      <ActivityForm mode="create" competitionOptions={competitionOptions} />
+      <ActivityForm
+        mode="create"
+        competitionOptions={competitionOptions}
+        competitionEnrollments={competitionEnrollments}
+        competitionTeams={competitionTeams}
+      />
       <ActivityList
         activities={activities}
         competitionOptions={competitionOptions}

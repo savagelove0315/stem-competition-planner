@@ -65,6 +65,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       id: activity.id,
       competitionId: activity.competitionId,
       name: activity.name,
+      activityType: activity.activityType,
       status: activity.status,
       startsAt: activity.startsAt,
       endsAt: activity.endsAt,

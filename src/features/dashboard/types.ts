@@ -28,6 +28,7 @@ export type DashboardActivity = {
   id: string;
   competitionId: string;
   name: string;
+  activityType: string | null;
   status: ActivityStatus;
   startsAt: string | null;
   endsAt: string | null;
@@ -58,6 +59,17 @@ export type DashboardTeam = {
   members: DashboardTeamMember[];
 };
 
+export type UpcomingActivityParticipant = Pick<
+  DashboardStudent,
+  "id" | "name" | "className" | "gradeLevel"
+>;
+
+export type UpcomingActivityTeamGroup = {
+  teamId: string;
+  teamName: string;
+  students: UpcomingActivityParticipant[];
+};
+
 export type DashboardData = {
   competitions: DashboardCompetition[];
   students: DashboardStudent[];
@@ -79,6 +91,8 @@ export type DashboardSummary = {
 export type UpcomingActivityOverview = DashboardActivity & {
   startsAt: string;
   participantCount: number;
+  teamGroups: UpcomingActivityTeamGroup[];
+  unassignedStudents: UpcomingActivityParticipant[];
 };
 
 export type CompetitionOverview = DashboardCompetition & {
