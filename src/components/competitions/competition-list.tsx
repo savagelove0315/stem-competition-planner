@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Archive, Pencil, Trash2, Users, UsersRound, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
@@ -78,6 +79,21 @@ const participationModeLabels: Record<ParticipationMode, string> = {
 
 function EmptyMetadata() {
   return <span className="text-muted-foreground">Not set</span>;
+}
+
+function CompetitionMetadata({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 rounded-md border bg-background px-3 py-2">
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-1 min-w-0 break-words text-sm">{children}</dd>
+    </div>
+  );
 }
 
 function ArchiveSubmitButton({ disabled }: { disabled: boolean }) {
@@ -418,98 +434,105 @@ export function CompetitionList({
         </Button>
       </div>
 
-      <div className="w-full min-w-0 overflow-x-auto">
-        <table className="w-full min-w-[1240px] text-left text-sm">
-          <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Short name</th>
-              <th className="px-4 py-3 font-medium">Color</th>
-              <th className="px-4 py-3 font-medium">Icon</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Participation</th>
-              <th className="px-4 py-3 font-medium">Notice details</th>
-              <th className="px-4 py-3 font-medium">Students</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {competitions.map((competition) => {
-              const competitionEnrollments =
-                enrollmentsByCompetition.get(competition.id) ?? [];
+      <div className="grid min-w-0 gap-4 p-4 sm:p-5">
+        {competitions.map((competition) => {
+          const competitionEnrollments =
+            enrollmentsByCompetition.get(competition.id) ?? [];
+          const canManageTeams = competition.participationMode !== "individual";
 
-              return (
-                <tr key={competition.id} className="align-top">
-                    <td className="px-4 py-4">
-                      <div className="font-medium">{competition.name}</div>
-                      {competition.description ? (
-                        <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
-                          {competition.description}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-4">
-                      {competition.shortName ? (
-                        competition.shortName
-                      ) : (
-                        <EmptyMetadata />
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
+          return (
+            <article
+              key={competition.id}
+              className="grid min-w-0 gap-4 rounded-lg border bg-background p-4 shadow-sm"
+            >
+              <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                <div className="min-w-0 space-y-3">
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className="size-4 rounded border"
+                          className="size-3 shrink-0 rounded-full border"
                           style={{ backgroundColor: competition.color }}
-                          aria-hidden="true"
+                          aria-label={`Competition color ${competition.color}`}
                         />
-                        <span className="font-mono text-xs">
-                          {competition.color}
-                        </span>
+                        {competition.icon ? (
+                          <span className="text-base" aria-label="Competition icon">
+                            {competition.icon}
+                          </span>
+                        ) : null}
+                        <h3 className="min-w-0 break-words text-base font-semibold">
+                          {competition.name}
+                        </h3>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      {competition.icon ? competition.icon : <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {competition.category ? (
-                        competition.category
-                      ) : (
-                        <EmptyMetadata />
+                      <p className="mt-1 break-words text-xs text-muted-foreground">
+                        {[
+                          competition.shortName
+                            ? `Short name ${competition.shortName}`
+                            : null,
+                          competition.category,
+                          participationModeLabels[competition.participationMode],
+                        ]
+                          .filter(Boolean)
+                          .join(" / ") || "Competition metadata not set"}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                        statusStyles[competition.status],
                       )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex rounded-md border bg-background px-2 py-1 text-xs font-medium">
+                    >
+                      {competition.status}
+                    </span>
+                  </div>
+
+                  {competition.description ? (
+                    <p className="max-w-4xl break-words text-sm leading-6 text-muted-foreground">
+                      {competition.description}
+                    </p>
+                  ) : null}
+
+                  <dl className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <CompetitionMetadata label="Category">
+                      {competition.category ? competition.category : <EmptyMetadata />}
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Participation">
+                      <span className="inline-flex rounded-md border bg-muted px-2 py-1 text-xs font-medium">
                         {participationModeLabels[competition.participationMode]}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="grid gap-1 text-xs">
-                        <div>
-                          <span className="font-medium">Mode: </span>
-                          {competition.noticeMode ? (
-                            competition.noticeMode
-                          ) : (
-                            <EmptyMetadata />
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Period: </span>
-                          {competition.noticePeriod ? (
-                            competition.noticePeriod
-                          ) : (
-                            <EmptyMetadata />
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs font-medium">
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Notice">
+                      {competition.noticeMode ? competition.noticeMode : <EmptyMetadata />}
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Notice period">
+                      {competition.noticePeriod ? (
+                        competition.noticePeriod
+                      ) : (
+                        <EmptyMetadata />
+                      )}
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Students">
+                      <span className="inline-flex items-center gap-1 rounded-md border bg-muted px-2 py-1 text-xs font-medium">
                         <Users aria-hidden="true" />
                         {competitionEnrollments.length}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Color">
+                      <span className="inline-flex min-w-0 items-center gap-2">
+                        <span
+                          className="size-4 shrink-0 rounded border"
+                          style={{ backgroundColor: competition.color }}
+                          aria-hidden="true"
+                        />
+                        <span className="break-all font-mono text-xs">
+                          {competition.color}
+                        </span>
+                      </span>
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Icon">
+                      {competition.icon ? competition.icon : <EmptyMetadata />}
+                    </CompetitionMetadata>
+                    <CompetitionMetadata label="Status">
                       <span
                         className={cn(
                           "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
@@ -518,54 +541,51 @@ export function CompetitionList({
                       >
                         {competition.status}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setManagingRosterId(competition.id)}
-                        >
-                          <Users aria-hidden="true" />
-                          Manage Students
-                        </Button>
-                        {competition.participationMode === "individual" ? (
-                          <p className="max-w-44 text-xs text-muted-foreground">
-                            Change participation mode to Team or Mixed to manage
-                            teams.
-                          </p>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setManagingTeamsId(competition.id)}
-                          >
-                            <UsersRound aria-hidden="true" />
-                            Manage Teams
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingId(competition.id)}
-                        >
-                          <Pencil aria-hidden="true" />
-                          Edit
-                        </Button>
-                        <ArchiveCompetitionForm competition={competition} />
-                        <div className="border-l pl-2">
-                          <DeleteCompetitionForm competition={competition} />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </CompetitionMetadata>
+                  </dl>
+                </div>
+
+                <div className="flex min-w-0 flex-wrap gap-2 xl:max-w-md xl:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setManagingRosterId(competition.id)}
+                  >
+                    <Users aria-hidden="true" />
+                    Manage Students
+                  </Button>
+                  {canManageTeams ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setManagingTeamsId(competition.id)}
+                    >
+                      <UsersRound aria-hidden="true" />
+                      Manage Teams
+                    </Button>
+                  ) : (
+                    <p className="max-w-48 rounded-md border bg-muted px-2 py-1 text-xs text-muted-foreground">
+                      Change to Team or Mixed to manage teams.
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingId(competition.id)}
+                  >
+                    <Pencil aria-hidden="true" />
+                    Edit
+                  </Button>
+                  <ArchiveCompetitionForm competition={competition} />
+                  <DeleteCompetitionForm competition={competition} />
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       {managingRosterCompetition ? (
