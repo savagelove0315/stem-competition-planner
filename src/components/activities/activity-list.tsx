@@ -2,7 +2,16 @@
 
 import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, Ban, ListChecks, Pencil, Trash2, X } from "lucide-react";
+import {
+  Archive,
+  Ban,
+  ChevronDown,
+  ListChecks,
+  Pencil,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { ActivityForm } from "@/components/activities/activity-form";
@@ -256,6 +265,9 @@ export function ActivityList({
   participantStudentOptions,
 }: ActivityListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedParticipantIds, setExpandedParticipantIds] = useState(
+    () => new Set<string>(),
+  );
   const editingActivity = useMemo(
     () => activities.find((activity) => activity.id === editingId) ?? null,
     [activities, editingId],
@@ -271,6 +283,19 @@ export function ActivityList({
 
     return groupedParticipants;
   }, [participantAssignments]);
+  function toggleParticipantManager(activityId: string) {
+    setExpandedParticipantIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(activityId)) {
+        next.delete(activityId);
+      } else {
+        next.add(activityId);
+      }
+
+      return next;
+    });
+  }
 
   if (activities.length === 0) {
     return (
@@ -322,6 +347,8 @@ export function ActivityList({
               const competition = activity.competition;
               const timeRange = formatTimeRange(activity);
               const participants = participantsByActivity.get(activity.id) ?? [];
+              const isParticipantsExpanded = expandedParticipantIds.has(activity.id);
+              const participantsPanelId = `activity-${activity.id}-participants`;
 
               return (
                 <Fragment key={activity.id}>
@@ -411,12 +438,55 @@ export function ActivityList({
 
                   <tr>
                     <td className="bg-muted/20 px-4 py-4" colSpan={9}>
-                      <ActivityParticipantsManager
-                        activityId={activity.id}
-                        competitionId={activity.competitionId}
-                        participants={participants}
-                        studentOptions={participantStudentOptions}
-                      />
+                      <div className="grid gap-3 rounded-md border bg-background p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Users
+                              className="size-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-semibold">
+                                Assign participants
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {participants.length} assigned student
+                                {participants.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-controls={participantsPanelId}
+                            aria-expanded={isParticipantsExpanded}
+                            onClick={() => toggleParticipantManager(activity.id)}
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "transition-transform",
+                                isParticipantsExpanded ? "rotate-180" : "",
+                              )}
+                              aria-hidden="true"
+                            />
+                            {isParticipantsExpanded
+                              ? "Hide Participants"
+                              : "Manage Participants"}
+                          </Button>
+                        </div>
+
+                        {isParticipantsExpanded ? (
+                          <div id={participantsPanelId}>
+                            <ActivityParticipantsManager
+                              activityId={activity.id}
+                              competitionId={activity.competitionId}
+                              participants={participants}
+                              studentOptions={participantStudentOptions}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 </Fragment>
