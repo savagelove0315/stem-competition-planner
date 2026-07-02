@@ -19,6 +19,7 @@ supabase/migrations/002_enable_rls_and_basic_policies.sql
 supabase/migrations/003_add_competition_metadata.sql
 supabase/migrations/004_add_student_profile_fields.sql
 supabase/migrations/010_add_competition_notice_fields.sql
+supabase/migrations/012_add_team_management_safety.sql
 ```
 
 Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
@@ -26,6 +27,11 @@ Migration `003_add_competition_metadata.sql` adds generic competition display an
 Migration `004_add_student_profile_fields.sql` adds generic student profile fields for class filtering, timeline context, reports, and future conflict review. These fields are student attributes, not competition participation flags.
 
 Migration `010_add_competition_notice_fields.sql` adds optional parent notice display fields to competitions. Parent notices remain read-only generated output and are not stored as notice records.
+
+Migration `012_add_team_management_safety.sql` keeps the existing generic team
+tables and adds MVP safety rules: one active team per student per competition,
+active team members must be registered to that competition, and teams with
+active members cannot be deleted.
 
 ## Tables
 
@@ -218,6 +224,8 @@ Important constraints:
 
 - A team member must be registered for the same competition as the team.
 - A student can appear only once per team.
+- A student can be active in only one team within the same competition.
+- Teams cannot be deleted while they have active members.
 
 ### `teachers`
 

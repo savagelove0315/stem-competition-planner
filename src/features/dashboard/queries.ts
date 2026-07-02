@@ -6,6 +6,7 @@ import { getConflictDetectionData } from "@/features/conflicts/queries";
 import { buildConflictViewModel } from "@/features/conflicts/utils";
 import { listCompetitions } from "@/features/competitions/queries";
 import { listStudents } from "@/features/students/queries";
+import { listCompetitionTeams } from "@/features/teams/queries";
 import type { DashboardData } from "@/features/dashboard/types";
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -14,12 +15,14 @@ export async function getDashboardData(): Promise<DashboardData> {
     students,
     activities,
     activityParticipants,
+    teams,
     conflictData,
   ] = await Promise.all([
     listCompetitions(),
     listStudents(),
     listActivities(),
     listActivityParticipants(),
+    listCompetitionTeams(),
     getConflictDetectionData(),
   ]);
   const conflictViewModel = buildConflictViewModel({
@@ -71,6 +74,20 @@ export async function getDashboardData(): Promise<DashboardData> {
       activityId: participant.activityId,
       competitionId: participant.competitionId,
       studentId: participant.studentId,
+    })),
+    teams: teams.map((team) => ({
+      id: team.id,
+      competitionId: team.competitionId,
+      name: team.name,
+      status: team.status,
+      members: team.members.map((member) => ({
+        id: member.id,
+        teamId: member.teamId,
+        competitionId: member.competitionId,
+        studentId: member.studentId,
+        role: member.role,
+        studentName: member.student?.name ?? "Unknown student",
+      })),
     })),
     conflicts: conflictViewModel.conflicts,
   };

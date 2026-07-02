@@ -81,13 +81,16 @@ function toCompetitionPayload(values: CompetitionFormValues) {
 type CompetitionDeleteSafety = {
   activeEnrollmentCount: number;
   activityCount: number;
+  teamCount: number;
+  activeTeamMemberCount: number;
 };
 
 async function getCompetitionDeleteSafety(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
   competitionId: string,
 ): Promise<CompetitionDeleteSafety> {
-  const [activeEnrollments, activities] = await Promise.all([
+  const [activeEnrollments, activities, teams, activeTeamMembers] =
+    await Promise.all([
     supabase
       .from("student_competitions")
       .select("id", { count: "exact", head: true })
@@ -97,9 +100,18 @@ async function getCompetitionDeleteSafety(
       .from("activities")
       .select("id", { count: "exact", head: true })
       .eq("competition_id", competitionId),
+    supabase
+      .from("teams")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId),
+    supabase
+      .from("team_members")
+      .select("id", { count: "exact", head: true })
+      .eq("competition_id", competitionId)
+      .eq("status", "active"),
   ]);
 
-  const checks = [activeEnrollments, activities];
+  const checks = [activeEnrollments, activities, teams, activeTeamMembers];
   const firstError = checks.find((check) => check.error)?.error;
 
   if (firstError) {
@@ -109,13 +121,20 @@ async function getCompetitionDeleteSafety(
   return {
     activeEnrollmentCount: activeEnrollments.count ?? 0,
     activityCount: activities.count ?? 0,
+    teamCount: teams.count ?? 0,
+    activeTeamMemberCount: activeTeamMembers.count ?? 0,
   };
 }
 
 function getDeleteBlockedMessage({
   activeEnrollmentCount,
   activityCount,
+  activeTeamMemberCount,
 }: CompetitionDeleteSafety): string | null {
+  if (activeTeamMemberCount > 0) {
+    return "This competition still has active team members. Remove students from teams before deleting the competition, or archive it.";
+  }
+
   if (activeEnrollmentCount > 0 && activityCount > 0) {
     return "This competition still has registered students and activities. Withdraw students and remove activities first, or archive the competition.";
   }
@@ -131,15 +150,27 @@ function getDeleteBlockedMessage({
   return null;
 }
 
-async function deleteWithdrawnCompetitionEnrollments(
+async function deleteSafeCompetitionJoins(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
   competitionId: string,
 ) {
-  const { error } = await supabase
-    .from("student_competitions")
-    .delete()
-    .eq("competition_id", competitionId)
-    .eq("status", "withdrawn");
+  const [withdrawnEnrollments, inactiveTeamMembers, teams] = await Promise.all([
+    supabase
+      .from("student_competitions")
+      .delete()
+      .eq("competition_id", competitionId)
+      .eq("status", "withdrawn"),
+    supabase
+      .from("team_members")
+      .delete()
+      .eq("competition_id", competitionId)
+      .neq("status", "active"),
+    supabase.from("teams").delete().eq("competition_id", competitionId),
+  ]);
+
+  const error = [withdrawnEnrollments, inactiveTeamMembers, teams].find(
+    (result) => result.error,
+  )?.error;
 
   if (error) {
     throw new Error(error.message);
@@ -271,7 +302,7 @@ export async function deleteCompetitionAction(
       };
     }
 
-    await deleteWithdrawnCompetitionEnrollments(supabase, id.data);
+    await deleteSafeCompetitionJoins(supabase, id.data);
 
     const { error } = await supabase
       .from("competitions")

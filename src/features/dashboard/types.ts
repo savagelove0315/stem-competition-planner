@@ -39,11 +39,29 @@ export type DashboardActivityParticipant = {
   studentId: string;
 };
 
+export type DashboardTeamMember = {
+  id: string;
+  teamId: string;
+  competitionId: string;
+  studentId: string;
+  role: string | null;
+  studentName: string;
+};
+
+export type DashboardTeam = {
+  id: string;
+  competitionId: string;
+  name: string;
+  status: string;
+  members: DashboardTeamMember[];
+};
+
 export type DashboardData = {
   competitions: DashboardCompetition[];
   students: DashboardStudent[];
   activities: DashboardActivity[];
   activityParticipants: DashboardActivityParticipant[];
+  teams: DashboardTeam[];
   conflicts: DetectedConflict[];
 };
 
@@ -66,6 +84,9 @@ export type CompetitionOverview = DashboardCompetition & {
   activityCount: number;
   upcomingActivityCount: number;
   participantAssignmentCount: number;
+  teamCount: number;
+  teams: DashboardTeam[];
+  unassignedStudents: DashboardStudent[];
 };
 
 export type StudentWorkloadOverview = DashboardStudent & {

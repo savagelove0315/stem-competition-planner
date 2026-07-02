@@ -97,7 +97,7 @@ type StudentDeleteSafety = {
   activeCompetitionCount: number;
   activeActivityParticipantCount: number;
   conflictRecordCount: number;
-  teamMemberCount: number;
+  activeTeamMemberCount: number;
 };
 
 function isDuplicateStudentEmailError(error: { code?: string; message: string }) {
@@ -195,7 +195,7 @@ async function getStudentDeleteSafety(
     activeCompetitions,
     activeActivityParticipants,
     conflictRecords,
-    teamMembers,
+    activeTeamMembers,
   ] = await Promise.all([
     supabase
       .from("student_competitions")
@@ -214,14 +214,15 @@ async function getStudentDeleteSafety(
     supabase
       .from("team_members")
       .select("id", { count: "exact", head: true })
-      .eq("student_id", studentId),
+      .eq("student_id", studentId)
+      .eq("status", "active"),
   ]);
 
   const checks = [
     activeCompetitions,
     activeActivityParticipants,
     conflictRecords,
-    teamMembers,
+    activeTeamMembers,
   ];
   const firstError = checks.find((check) => check.error)?.error;
 
@@ -233,7 +234,7 @@ async function getStudentDeleteSafety(
     activeCompetitionCount: activeCompetitions.count ?? 0,
     activeActivityParticipantCount: activeActivityParticipants.count ?? 0,
     conflictRecordCount: conflictRecords.count ?? 0,
-    teamMemberCount: teamMembers.count ?? 0,
+    activeTeamMemberCount: activeTeamMembers.count ?? 0,
   };
 }
 
@@ -241,7 +242,7 @@ function getStudentDeleteBlockedMessage({
   activeCompetitionCount,
   activeActivityParticipantCount,
   conflictRecordCount,
-  teamMemberCount,
+  activeTeamMemberCount,
 }: StudentDeleteSafety): string | null {
   if (activeCompetitionCount > 0) {
     return "This student is still registered in competitions. Withdraw the student first or archive the student.";
@@ -251,7 +252,7 @@ function getStudentDeleteBlockedMessage({
     return "This student has activity participation records. Remove the student from activities first or archive the student.";
   }
 
-  if (teamMemberCount > 0) {
+  if (activeTeamMemberCount > 0) {
     return "This student has team membership records. Remove the student from teams first or archive the student.";
   }
 
@@ -266,7 +267,8 @@ async function deleteInactiveStudentJoins(
   supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
   studentId: string,
 ) {
-  const [cancelledParticipants, withdrawnCompetitions] = await Promise.all([
+  const [cancelledParticipants, withdrawnCompetitions, inactiveTeamMembers] =
+    await Promise.all([
     supabase
       .from("activity_participants")
       .delete()
@@ -277,11 +279,18 @@ async function deleteInactiveStudentJoins(
       .delete()
       .eq("student_id", studentId)
       .eq("status", "withdrawn"),
+    supabase
+      .from("team_members")
+      .delete()
+      .eq("student_id", studentId)
+      .neq("status", "active"),
   ]);
 
-  const firstError = [cancelledParticipants, withdrawnCompetitions].find(
-    (result) => result.error,
-  )?.error;
+  const firstError = [
+    cancelledParticipants,
+    withdrawnCompetitions,
+    inactiveTeamMembers,
+  ].find((result) => result.error)?.error;
 
   if (firstError) {
     throw new Error(firstError.message);

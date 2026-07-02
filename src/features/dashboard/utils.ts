@@ -4,6 +4,7 @@ import type {
   DashboardActivityParticipant,
   DashboardData,
   DashboardStudent,
+  DashboardTeam,
   DashboardViewModel,
   StudentWorkloadOverview,
   UpcomingActivityOverview,
@@ -125,6 +126,7 @@ function getCompetitionOverviews(
     data.activityParticipants,
     (participant) => participant.competitionId,
   );
+  const teamsByCompetition = groupBy(data.teams, (team) => team.competitionId);
 
   data.students.forEach((student) => {
     student.registeredCompetitionIds.forEach((competitionId) => {
@@ -138,13 +140,42 @@ function getCompetitionOverviews(
   return data.competitions
     .filter((competition) => overviewCompetitionStatuses.has(competition.status))
     .sort((left, right) => left.name.localeCompare(right.name))
-    .map((competition) => ({
-      ...competition,
-      enrolledStudentCount: enrolledStudentCounts.get(competition.id) ?? 0,
-      activityCount: activityCounts.get(competition.id) ?? 0,
-      upcomingActivityCount: upcomingActivityCounts.get(competition.id) ?? 0,
-      participantAssignmentCount:
-        participantAssignmentCounts.get(competition.id) ?? 0,
+    .map((competition) => {
+      const teams = teamsByCompetition.get(competition.id) ?? [];
+      const assignedStudentIds = new Set(
+        teams.flatMap((team) => team.members.map((member) => member.studentId)),
+      );
+      const unassignedStudents = data.students
+        .filter(
+          (student) =>
+            student.status === "active" &&
+            student.registeredCompetitionIds.includes(competition.id) &&
+            !assignedStudentIds.has(student.id),
+        )
+        .sort((left, right) => left.name.localeCompare(right.name));
+
+      return {
+        ...competition,
+        enrolledStudentCount: enrolledStudentCounts.get(competition.id) ?? 0,
+        activityCount: activityCounts.get(competition.id) ?? 0,
+        upcomingActivityCount: upcomingActivityCounts.get(competition.id) ?? 0,
+        participantAssignmentCount:
+          participantAssignmentCounts.get(competition.id) ?? 0,
+        teamCount: teams.length,
+        teams: sortTeams(teams),
+        unassignedStudents,
+      };
+    });
+}
+
+function sortTeams(teams: DashboardTeam[]) {
+  return [...teams]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((team) => ({
+      ...team,
+      members: [...team.members].sort((left, right) =>
+        left.studentName.localeCompare(right.studentName),
+      ),
     }));
 }
 
@@ -219,4 +250,17 @@ function countBy<T>(items: T[], getKey: (item: T) => string) {
   });
 
   return counts;
+}
+
+function groupBy<T>(items: T[], getKey: (item: T) => string) {
+  const groups = new Map<string, T[]>();
+
+  items.forEach((item) => {
+    const key = getKey(item);
+    const group = groups.get(key) ?? [];
+    group.push(item);
+    groups.set(key, group);
+  });
+
+  return groups;
 }

@@ -107,7 +107,10 @@ Teams belong to one competition. Students join teams through `team_members`.
 - The team belongs to that competition.
 - The student is registered for that competition.
 
-The current schema allows a student to join multiple teams in the same competition unless product rules later restrict that. It only prevents duplicate membership in the same team.
+Team assignment is optional. A registered student may have no team, but a
+student can be active in only one team within the same competition. Removing a
+student from a team marks the membership as left so the student can be assigned
+elsewhere without storing a team name on the student record.
 
 ## Conflicts
 
