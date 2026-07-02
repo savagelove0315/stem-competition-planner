@@ -7,6 +7,9 @@ import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+const AUTH_UNREACHABLE_MESSAGE =
+  "Unable to reach Supabase Auth. Please check your internet connection and try again.";
+
 function getSafeRedirectPath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
     return "/dashboard";
@@ -24,6 +27,8 @@ function hasSupabaseAuthCookie(): boolean {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const authErrorMessage =
+    searchParams.get("authError") === "auth_unreachable" ? AUTH_UNREACHABLE_MESSAGE : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +108,11 @@ export function LoginForm() {
         <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p>{error}</p>
+        </div>
+      ) : authErrorMessage ? (
+        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <p>{authErrorMessage}</p>
         </div>
       ) : null}
 
