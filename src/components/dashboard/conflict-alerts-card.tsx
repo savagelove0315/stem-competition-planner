@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info, Radar, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type {
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 type ConflictAlertsCardProps = {
   conflicts: DetectedConflict[];
+  seriousCount: number;
+  unresolvedCount: number;
 };
 
 const severityStyles: Record<ConflictDetectionSeverity, string> = {
@@ -62,32 +64,84 @@ function ReviewStatusBadge({ status }: { status: ConflictReviewStatus }) {
   );
 }
 
-export function ConflictAlertsCard({ conflicts }: ConflictAlertsCardProps) {
+export function ConflictAlertsCard({
+  conflicts,
+  seriousCount,
+  unresolvedCount,
+}: ConflictAlertsCardProps) {
+  const hasConflicts = unresolvedCount > 0;
+
   return (
     <section className="min-w-0 rounded-lg border bg-card shadow-sm">
       <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">Conflict alerts</h2>
+            <span className="flex size-9 items-center justify-center rounded-md border border-teal-500/20 bg-teal-500/10 text-teal-700">
+              <Radar className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold">Conflict radar</h2>
+              <p className="text-sm text-muted-foreground">
+                Live schedule risks from existing conflict checks.
+              </p>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Unresolved live conflicts, with serious risks first.
-          </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/conflicts">Review Conflicts</Link>
+          <Link href="/conflicts">Review conflicts</Link>
         </Button>
       </div>
 
-      {conflicts.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">
-          No conflicts detected.
+      <div className="grid gap-4 p-5">
+        <div className="grid gap-4 rounded-lg border bg-gradient-to-br from-slate-50 to-white p-4 sm:grid-cols-[auto_1fr]">
+          <div className="relative flex size-28 items-center justify-center rounded-full bg-emerald-500/10">
+            <div className="absolute size-24 rounded-full border border-emerald-500/20" />
+            <div className="absolute size-16 rounded-full border border-emerald-500/30 bg-emerald-500/10" />
+            <span
+              className={cn(
+                "relative flex size-12 items-center justify-center rounded-full text-white shadow-sm",
+                seriousCount > 0 ? "bg-rose-600" : "bg-emerald-600",
+              )}
+            >
+              {seriousCount > 0 ? (
+                <AlertCircle className="size-6" aria-hidden="true" />
+              ) : (
+                <ShieldCheck className="size-6" aria-hidden="true" />
+              )}
+            </span>
+          </div>
+          <div className="flex min-w-0 flex-col justify-center">
+            <p
+              className={cn(
+                "text-xl font-semibold",
+                seriousCount > 0 ? "text-rose-700" : "text-emerald-700",
+              )}
+            >
+              {seriousCount > 0
+                ? `${seriousCount} serious unresolved`
+                : "All clear"}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {hasConflicts
+                ? `${unresolvedCount} unresolved conflict${
+                    unresolvedCount === 1 ? "" : "s"
+                  } need review.`
+                : "No conflicts detected. Schedules are balanced."}
+            </p>
+            <Button asChild size="sm" className="mt-4 w-fit">
+              <Link href="/conflicts">Open conflict review</Link>
+            </Button>
+          </div>
         </div>
-      ) : (
-        <div className="divide-y">
+
+        {conflicts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No unresolved conflicts are currently listed.
+          </p>
+        ) : (
+          <div className="grid gap-3">
           {conflicts.map((conflict) => (
-            <div key={conflict.id} className="grid gap-3 px-5 py-4">
+            <div key={conflict.id} className="grid gap-3 rounded-lg border p-3">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="font-medium">{conflict.student.name}</h3>
                 <span className="text-sm text-muted-foreground">
@@ -115,8 +169,9 @@ export function ConflictAlertsCard({ conflicts }: ConflictAlertsCardProps) {
               </div>
             </div>
           ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

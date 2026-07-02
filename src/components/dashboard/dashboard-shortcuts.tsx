@@ -57,9 +57,9 @@ export function DashboardShortcuts() {
   return (
     <section className="grid gap-4 rounded-lg border bg-card p-5 shadow-sm lg:grid-cols-[0.9fr_1.1fr]">
       <div>
-        <h2 className="text-lg font-semibold">Navigation shortcuts</h2>
+        <h2 className="text-lg font-semibold">Today&apos;s focus</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Jump to the daily planning pages teachers use most often.
+          Jump to the operational pages teachers use most often.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {shortcuts.map((shortcut) => {
@@ -77,12 +77,12 @@ export function DashboardShortcuts() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-background p-4">
+      <div className="rounded-md border bg-gradient-to-br from-slate-50 to-white p-4">
         <h3 className="text-sm font-semibold">Getting started workflow</h3>
         <ol className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
           {workflowSteps.map((step, index) => (
             <li key={step} className="flex items-center gap-2">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-semibold text-foreground">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-teal-500/20 bg-teal-500/10 text-xs font-semibold text-teal-700">
                 {index + 1}
               </span>
               <span>{step}</span>

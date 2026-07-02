@@ -1,25 +1,59 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, ChevronDown, ChevronRight, UsersRound } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import type { UpcomingActivityOverview } from "@/features/dashboard/types";
-import { formatPlainTime } from "@/lib/plain-date-time";
+import { formatPlainTimeRange } from "@/lib/plain-date-time";
 
 type UpcomingActivitiesCardProps = {
   activities: UpcomingActivityOverview[];
   hasActivities: boolean;
 };
 
-function formatDateTime(value: string) {
-  const date = new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-  }).format(new Date(value));
-  const time = formatPlainTime(value);
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 
-  return [date, time].filter(Boolean).join(", ");
+function formatPlainDateParts(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (!match) {
+    return {
+      month: "Date",
+      day: "--",
+      label: "Date not set",
+    };
+  }
+
+  const monthIndex = Number(match[2]) - 1;
+  const day = String(Number(match[3]));
+  const month = monthNames[monthIndex] ?? "Date";
+
+  return {
+    month,
+    day,
+    label: `${month} ${day}`,
+  };
 }
 
 function CompetitionBadge({ activity }: { activity: UpcomingActivityOverview }) {
@@ -66,14 +100,23 @@ export function UpcomingActivitiesCard({
 
   return (
     <section className="min-w-0 rounded-lg border bg-card shadow-sm">
-      <div className="border-b px-5 py-4">
-        <div className="flex items-center gap-2">
-          <CalendarClock className="size-5 text-muted-foreground" aria-hidden="true" />
-          <h2 className="text-lg font-semibold">Upcoming activities</h2>
+      <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-md border border-blue-500/20 bg-blue-500/10 text-blue-700">
+              <CalendarClock className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold">Upcoming activities</h2>
+              <p className="text-sm text-muted-foreground">
+                Next scheduled activities with participants.
+              </p>
+            </div>
+          </div>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Next scheduled activities with participant counts.
-        </p>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/activities">View all</Link>
+        </Button>
       </div>
 
       {activities.length === 0 ? (
@@ -88,9 +131,11 @@ export function UpcomingActivitiesCard({
           </Button>
         </div>
       ) : (
-        <div className="divide-y">
+        <div className="grid gap-3 p-4">
           {activities.map((activity) => {
             const isExpanded = expandedActivityIds.has(activity.id);
+            const dateParts = formatPlainDateParts(activity.startsAt);
+            const timeLabel = formatPlainTimeRange(activity.startsAt, activity.endsAt);
             const unassignedLabel =
               activity.competition?.participationMode === "individual"
                 ? "Registered / Assigned Students"
@@ -99,43 +144,62 @@ export function UpcomingActivitiesCard({
                   : "No team assigned";
 
             return (
-              <div key={activity.id} className="grid gap-3 px-5 py-4">
+              <div
+                key={activity.id}
+                className="grid gap-3 rounded-lg border bg-gradient-to-r from-slate-50 to-white p-3 shadow-sm"
+              >
                 <button
                   type="button"
-                  className="grid min-w-0 gap-3 text-left lg:grid-cols-[1fr_auto]"
+                  className="grid min-w-0 gap-3 text-left sm:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr_auto]"
                   aria-expanded={isExpanded}
                   onClick={() => toggleActivity(activity.id)}
                 >
-                  <span className="flex min-w-0 items-start gap-3">
-                    <span className="mt-0.5 text-muted-foreground" aria-hidden="true">
-                      {isExpanded ? <ChevronDown /> : <ChevronRight />}
+                  <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-md border bg-card px-2 py-2 shadow-sm">
+                    <span className="text-[10px] font-semibold uppercase text-primary">
+                      {dateParts.month}
                     </span>
-                    <span className="min-w-0">
+                    <span className="text-2xl font-semibold leading-none">
+                      {dateParts.day}
+                    </span>
+                  </span>
+
+                  <span className="flex min-w-0 items-start gap-3">
+                    <span className="mt-1 text-muted-foreground" aria-hidden="true">
+                      {isExpanded ? (
+                        <ChevronDown className="size-4" />
+                      ) : (
+                        <ChevronRight className="size-4" />
+                      )}
+                    </span>
+                    <span className="grid min-w-0 gap-2">
                       <span className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span className="min-w-0 truncate font-medium">
+                        <span className="min-w-0 truncate font-semibold">
                           {activity.name}
                         </span>
                         <CompetitionBadge activity={activity} />
                       </span>
-                      <span className="mt-1 block text-sm text-muted-foreground">
-                        {[activity.activityType, formatDateTime(activity.startsAt)]
-                          .filter(Boolean)
-                          .join(" / ")}
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                        {activity.activityType ? <span>{activity.activityType}</span> : null}
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="size-3.5" aria-hidden="true" />
+                          {timeLabel}
+                        </span>
+                        <span>{dateParts.label}</span>
                       </span>
                     </span>
                   </span>
-                  <span className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-md border bg-muted px-2 py-1 font-medium capitalize">
+                  <span className="flex flex-wrap gap-2 text-xs sm:pl-[4.75rem] lg:pl-0">
+                    <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 font-medium capitalize text-emerald-700">
                       {activity.status}
                     </span>
-                    <span className="rounded-md border bg-muted px-2 py-1 font-medium">
+                    <span className="rounded-md border bg-card px-2 py-1 font-medium">
                       {activity.participantCount} participants
                     </span>
                   </span>
                 </button>
 
                 {isExpanded ? (
-                  <div className="grid gap-3 rounded-md border bg-background p-4 sm:ml-8">
+                  <div className="grid gap-3 rounded-md border bg-background p-4 sm:ml-20">
                     {activity.teamGroups.length > 0 ? (
                       <div className="grid gap-3">
                         {activity.teamGroups.map((team) => (

@@ -19,6 +19,7 @@ export function MobileMenu() {
         type="button"
         variant="outline"
         size="icon"
+        className="border-slate-200 bg-white"
         aria-label={isOpen ? "Close navigation" : "Open navigation"}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
@@ -27,7 +28,7 @@ export function MobileMenu() {
       </Button>
 
       {isOpen ? (
-        <div className="absolute left-0 right-0 top-16 max-h-[calc(100vh-7.5rem)] overflow-y-auto border-b bg-card p-3 shadow-lg">
+        <div className="absolute left-0 right-0 top-16 max-h-[calc(100vh-7.5rem)] overflow-y-auto border-b bg-[#071a3a] p-3 text-white shadow-lg">
           <nav className="grid gap-1 sm:grid-cols-2">
             {navigationItems.map((item) => {
               const Icon = item.icon;
@@ -39,9 +40,9 @@ export function MobileMenu() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
+                    "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-cyan-50/75 hover:bg-white/10 hover:text-white",
                     isActive &&
-                      "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                      "bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-500 hover:text-white",
                   )}
                 >
                   <Icon className="size-4" aria-hidden="true" />
