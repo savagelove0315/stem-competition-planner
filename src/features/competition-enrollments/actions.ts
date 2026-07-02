@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAuthenticatedClient as requireAuthenticatedSupabaseClient } from "@/lib/auth/require-authenticated-client";
 
 import {
   competitionEnrollmentIdSchema,
@@ -14,6 +14,12 @@ export type CompetitionEnrollmentActionState = {
   status: "idle" | "success" | "error";
   message: string | null;
   fieldErrors?: Partial<Record<keyof CompetitionEnrollmentValues, string[]>>;
+};
+
+type EnrollmentRecord = {
+  student_id: string;
+  competition_id: string;
+  status: string;
 };
 
 const initialErrorState: CompetitionEnrollmentActionState = {
@@ -37,15 +43,7 @@ function readEnrollmentForm(formData: FormData) {
 }
 
 async function requireAuthenticatedClient() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error("You must be signed in to manage competition students.");
-  }
+  const { supabase } = await requireAuthenticatedSupabaseClient("/competitions");
 
   return supabase;
 }
@@ -68,6 +66,55 @@ function formatEnrollmentMutationError(error: {
   }
 
   return error.message;
+}
+
+async function getEnrollmentRecord(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  enrollmentId: string,
+) {
+  const { data, error } = await supabase
+    .from("student_competitions")
+    .select("student_id,competition_id,status")
+    .eq("id", enrollmentId)
+    .limit(1);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as unknown as EnrollmentRecord[])[0] ?? null;
+}
+
+async function hasActiveCompetitionLinks(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  enrollment: EnrollmentRecord,
+) {
+  const [teamMembers, activityParticipants] = await Promise.all([
+    supabase
+      .from("team_members")
+      .select("id,teams!inner(id)", { count: "exact", head: true })
+      .eq("student_id", enrollment.student_id)
+      .eq("competition_id", enrollment.competition_id)
+      .eq("status", "active")
+      .eq("teams.competition_id", enrollment.competition_id),
+    supabase
+      .from("activity_participants")
+      .select("id,activities!inner(id)", { count: "exact", head: true })
+      .eq("student_id", enrollment.student_id)
+      .eq("competition_id", enrollment.competition_id)
+      .neq("status", "cancelled")
+      .eq("activities.competition_id", enrollment.competition_id),
+  ]);
+
+  const firstError = [teamMembers, activityParticipants].find(
+    (result) => result.error,
+  )?.error;
+
+  if (firstError) {
+    throw new Error(firstError.message);
+  }
+
+  return (teamMembers.count ?? 0) > 0 || (activityParticipants.count ?? 0) > 0;
 }
 
 export async function addCompetitionEnrollmentAction(
@@ -192,6 +239,20 @@ export async function withdrawCompetitionEnrollmentAction(
 
   try {
     const supabase = await requireAuthenticatedClient();
+    const enrollment = await getEnrollmentRecord(supabase, id.data);
+
+    if (!enrollment) {
+      return { status: "error", message: "Competition enrollment not found." };
+    }
+
+    if (await hasActiveCompetitionLinks(supabase, enrollment)) {
+      return {
+        status: "error",
+        message:
+          "Remove this student from related teams and activities before withdrawing them from this competition.",
+      };
+    }
+
     const { error } = await supabase
       .from("student_competitions")
       .update({

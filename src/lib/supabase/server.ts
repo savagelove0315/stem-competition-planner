@@ -19,7 +19,7 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient> {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // Server Components cannot set cookies; middleware handles session refresh.
+          // Server Components cannot always set cookies; this app intentionally has no middleware/proxy layer.
         }
       },
     },
