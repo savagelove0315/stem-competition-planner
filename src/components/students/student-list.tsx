@@ -1,8 +1,17 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { Archive, ListChecks, Pencil, Trash2, Users, X } from "lucide-react";
+import {
+  Archive,
+  Eye,
+  ListChecks,
+  Pencil,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { StudentForm } from "@/components/students/student-form";
@@ -49,6 +58,10 @@ function getStudentName(student: StudentWithCompetitions) {
     student.displayName ??
     [student.firstName, student.lastName].filter(Boolean).join(" ")
   );
+}
+
+function getStudentFullName(student: StudentWithCompetitions) {
+  return [student.firstName, student.lastName].filter(Boolean).join(" ");
 }
 
 function getStudentSecondaryDetails(student: StudentWithCompetitions) {
@@ -143,22 +156,220 @@ function DeleteStudentForm({ student }: { student: StudentWithCompetitions }) {
   );
 }
 
+function ProfileField({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  const isEmptyString = typeof value === "string" && value.trim().length === 0;
+
+  return (
+    <div className="grid gap-1">
+      <dt className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="min-w-0 break-words text-sm">
+        {value && !isEmptyString ? value : <EmptyMetadata />}
+      </dd>
+    </div>
+  );
+}
+
+function StudentProfileSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="grid gap-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <dl className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2">
+        {children}
+      </dl>
+    </section>
+  );
+}
+
+function CompetitionBadges({
+  student,
+}: {
+  student: StudentWithCompetitions;
+}) {
+  if (student.competitionAssignments.length === 0) {
+    return <span className="text-sm text-muted-foreground">None assigned</span>;
+  }
+
+  return (
+    <div className="flex min-w-0 flex-wrap gap-2">
+      {student.competitionAssignments.map((assignment) => (
+        <span
+          key={assignment.id}
+          className="inline-flex max-w-full items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
+          style={{
+            borderColor: assignment.competition.color,
+            backgroundColor: `${assignment.competition.color}1A`,
+          }}
+        >
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{
+              backgroundColor: assignment.competition.color,
+            }}
+            aria-hidden="true"
+          />
+          <span className="min-w-0 break-words">
+            {assignment.competition.shortName ?? assignment.competition.name}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function StudentProfileModal({
+  student,
+  onClose,
+}: {
+  student: StudentWithCompetitions;
+  onClose: () => void;
+}) {
+  const competitionCount = student.competitionAssignments.length;
+  const isMultiCompetition = competitionCount >= 2;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-background/80"
+        aria-label="Close student profile dialog"
+        onClick={onClose}
+      />
+      <div
+        aria-labelledby="student-profile-title"
+        aria-modal="true"
+        className="absolute left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-4 border-b px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase text-muted-foreground">
+              Student profile
+            </p>
+            <h2
+              id="student-profile-title"
+              className="mt-1 break-words text-lg font-semibold"
+            >
+              {getStudentName(student) || <EmptyMetadata />}
+            </h2>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close student profile dialog"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+
+        <div className="grid gap-5 overflow-y-auto px-4 py-5 sm:px-6">
+          <StudentProfileSection title="Student Information">
+            <ProfileField
+              label="Display name / student name"
+              value={getStudentName(student)}
+            />
+            <ProfileField
+              label="Full name"
+              value={getStudentFullName(student)}
+            />
+            <ProfileField label="Student code" value={student.studentCode} />
+            <ProfileField label="Class" value={student.className} />
+            <ProfileField label="Grade / Year" value={student.gradeLevel} />
+            <ProfileField
+              label="Status"
+              value={
+                <span
+                  className={cn(
+                    "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                    statusStyles[student.status],
+                  )}
+                >
+                  {student.status}
+                </span>
+              }
+            />
+          </StudentProfileSection>
+
+          <StudentProfileSection title="Contact Information">
+            <ProfileField label="Email" value={student.email} />
+            <ProfileField label="Phone number" value={student.phone} />
+          </StudentProfileSection>
+
+          <StudentProfileSection title="Guardian / Parent Information">
+            <ProfileField label="Guardian name" value={student.guardianName} />
+            <ProfileField
+              label="Guardian contact"
+              value={student.guardianContact}
+            />
+            <ProfileField label="Parent contact" value={student.parentContact} />
+          </StudentProfileSection>
+
+          <section className="grid gap-3">
+            <h3 className="text-sm font-semibold">Competition Participation</h3>
+            <div className="grid gap-4 rounded-lg border bg-card p-4">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <ProfileField
+                  label="Competition count"
+                  value={`${competitionCount} competition${competitionCount === 1 ? "" : "s"}`}
+                />
+                <ProfileField
+                  label="Multi-competition status"
+                  value={
+                    isMultiCompetition
+                      ? "Multi-competition"
+                      : "Single competition"
+                  }
+                />
+              </dl>
+              <div className="grid gap-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Competitions joined
+                </p>
+                <CompetitionBadges student={student} />
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StudentList({
   students,
   competitionOptions,
 }: StudentListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const editingStudent =
     students.find((student) => student.id === editingId) ?? null;
+  const profileStudent =
+    students.find((student) => student.id === profileId) ?? null;
 
   useEffect(() => {
-    if (!editingStudent) {
+    if (!editingStudent && !profileStudent) {
       return;
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setEditingId(null);
+        setProfileId(null);
       }
     }
 
@@ -169,7 +380,7 @@ export function StudentList({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editingStudent]);
+  }, [editingStudent, profileStudent]);
 
   if (students.length === 0) {
     return (
@@ -269,30 +480,7 @@ export function StudentList({
                         <span className="text-muted-foreground">joined</span>
                       </div>
                       {competitionCount > 0 ? (
-                        <div className="flex min-w-0 flex-wrap gap-2">
-                          {student.competitionAssignments.map((assignment) => (
-                            <span
-                              key={assignment.id}
-                              className="inline-flex max-w-full items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
-                              style={{
-                                borderColor: assignment.competition.color,
-                                backgroundColor: `${assignment.competition.color}1A`,
-                              }}
-                            >
-                              <span
-                                className="size-2 shrink-0 rounded-full"
-                                style={{
-                                  backgroundColor: assignment.competition.color,
-                                }}
-                                aria-hidden="true"
-                              />
-                              <span className="min-w-0 break-words">
-                                {assignment.competition.shortName ??
-                                  assignment.competition.name}
-                              </span>
-                            </span>
-                          ))}
-                        </div>
+                        <CompetitionBadges student={student} />
                       ) : (
                         <span className="text-sm text-muted-foreground">
                           None assigned
@@ -302,6 +490,15 @@ export function StudentList({
                   </div>
 
                   <div className="flex min-w-0 flex-wrap gap-2 xl:max-w-md xl:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProfileId(student.id)}
+                    >
+                      <Eye aria-hidden="true" />
+                      View Profile
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -332,6 +529,13 @@ export function StudentList({
           })}
         </div>
       </section>
+
+      {profileStudent ? (
+        <StudentProfileModal
+          student={profileStudent}
+          onClose={() => setProfileId(null)}
+        />
+      ) : null}
 
       {editingStudent ? (
         <div className="fixed inset-0 z-50">
