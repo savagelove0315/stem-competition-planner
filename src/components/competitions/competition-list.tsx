@@ -3,7 +3,15 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Archive, Pencil, Trash2, Users, UsersRound, X } from "lucide-react";
+import {
+  Archive,
+  Eye,
+  Pencil,
+  Trash2,
+  Users,
+  UsersRound,
+  X,
+} from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { CompetitionForm } from "@/components/competitions/competition-form";
@@ -25,6 +33,7 @@ import type {
   Competition,
   CompetitionStatus,
   ParticipationMode,
+  TeamStatus,
 } from "@/types/database";
 
 type CompetitionListProps = {
@@ -53,6 +62,13 @@ type CompetitionEditModalProps = {
   onClose: () => void;
 };
 
+type CompetitionDetailsModalProps = {
+  competition: Competition;
+  enrollments: CompetitionEnrollment[];
+  teams: CompetitionTeam[];
+  onClose: () => void;
+};
+
 const initialArchiveState: CompetitionActionState = {
   status: "idle",
   message: null,
@@ -68,6 +84,13 @@ const statusStyles: Record<CompetitionStatus, string> = {
   planned: "border-accent/30 bg-accent/10 text-accent",
   active: "border-primary/30 bg-primary/10 text-primary",
   completed: "border-secondary/40 bg-secondary/15 text-secondary-foreground",
+  archived: "border-border bg-background text-muted-foreground",
+};
+
+const teamStatusStyles: Record<TeamStatus, string> = {
+  active: "border-primary/30 bg-primary/10 text-primary",
+  inactive: "border-secondary/40 bg-secondary/15 text-secondary-foreground",
+  disqualified: "border-destructive/30 bg-destructive/10 text-destructive",
   archived: "border-border bg-background text-muted-foreground",
 };
 
@@ -92,6 +115,306 @@ function CompetitionMetadata({
     <div className="min-w-0 rounded-md border bg-background px-3 py-2">
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className="mt-1 min-w-0 break-words text-sm">{children}</dd>
+    </div>
+  );
+}
+
+function ProfileField({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  const isEmptyString = typeof value === "string" && value.trim().length === 0;
+
+  return (
+    <div className="grid gap-1">
+      <dt className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="min-w-0 break-words text-sm">
+        {value && !isEmptyString ? value : <EmptyMetadata />}
+      </dd>
+    </div>
+  );
+}
+
+function DetailsSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="grid gap-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function StudentSummary({
+  student,
+}: {
+  student: CompetitionEnrollmentStudent | null;
+}) {
+  if (!student) {
+    return (
+      <div className="rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
+        Student record unavailable
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border bg-background px-3 py-2">
+      <div className="font-medium">{student.name || <EmptyMetadata />}</div>
+      <p className="mt-1 break-words text-xs text-muted-foreground">
+        {[student.className, student.gradeLevel, student.studentCode]
+          .filter(Boolean)
+          .join(" / ") || "Student details not set"}
+      </p>
+    </div>
+  );
+}
+
+function CompetitionDetailsModal({
+  competition,
+  enrollments,
+  teams,
+  onClose,
+}: CompetitionDetailsModalProps) {
+  const activeRegisteredEnrollments = enrollments.filter(
+    (enrollment) =>
+      enrollment.status !== "withdrawn" && enrollment.student?.status === "active",
+  );
+  const activeTeams = teams.filter((team) => team.status === "active");
+  const activeTeamStudentIds = new Set(
+    activeTeams.flatMap((team) => team.members.map((member) => member.studentId)),
+  );
+  const unassignedEnrollments = activeRegisteredEnrollments.filter(
+    (enrollment) => !activeTeamStudentIds.has(enrollment.studentId),
+  );
+  const usesTeams = competition.participationMode !== "individual";
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-background/80"
+        aria-label="Close competition details dialog"
+        onClick={onClose}
+      />
+      <div
+        aria-labelledby="competition-details-title"
+        aria-modal="true"
+        className="absolute left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-4 border-b px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase text-muted-foreground">
+              Competition details
+            </p>
+            <h2
+              id="competition-details-title"
+              className="mt-1 break-words text-lg font-semibold"
+            >
+              {competition.name || <EmptyMetadata />}
+            </h2>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close competition details dialog"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+
+        <div className="grid gap-5 overflow-y-auto px-4 py-5 sm:px-6">
+          <DetailsSection title="Competition Information">
+            <dl className="grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
+              <ProfileField label="Competition name" value={competition.name} />
+              <ProfileField label="Short name" value={competition.shortName} />
+              <ProfileField label="Category" value={competition.category} />
+              <ProfileField label="Icon" value={competition.icon} />
+              <ProfileField
+                label="Color"
+                value={
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <span
+                      className="size-4 shrink-0 rounded border"
+                      style={{ backgroundColor: competition.color }}
+                      aria-hidden="true"
+                    />
+                    <span className="break-all font-mono text-xs">
+                      {competition.color}
+                    </span>
+                  </span>
+                }
+              />
+              <ProfileField
+                label="Participation mode"
+                value={participationModeLabels[competition.participationMode]}
+              />
+              <ProfileField label="Notice mode" value={competition.noticeMode} />
+              <ProfileField
+                label="Notice period"
+                value={competition.noticePeriod}
+              />
+              <ProfileField
+                label="Status"
+                value={
+                  <span
+                    className={cn(
+                      "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                      statusStyles[competition.status],
+                    )}
+                  >
+                    {competition.status}
+                  </span>
+                }
+              />
+              <ProfileField
+                label="Student count"
+                value={`${activeRegisteredEnrollments.length} student${
+                  activeRegisteredEnrollments.length === 1 ? "" : "s"
+                }`}
+              />
+              <ProfileField
+                label="Team count"
+                value={`${teams.length} team${teams.length === 1 ? "" : "s"}`}
+              />
+            </dl>
+          </DetailsSection>
+
+          <DetailsSection title="Registered Students">
+            {activeRegisteredEnrollments.length > 0 ? (
+              <div className="grid gap-2 rounded-lg border bg-card p-4">
+                {activeRegisteredEnrollments.map((enrollment) => (
+                  <StudentSummary
+                    key={enrollment.id}
+                    student={enrollment.student}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed bg-card px-4 py-4 text-sm text-muted-foreground">
+                No students registered.
+              </p>
+            )}
+          </DetailsSection>
+
+          <DetailsSection title="Teams">
+            {!usesTeams ? (
+              <p className="rounded-lg border border-dashed bg-card px-4 py-4 text-sm text-muted-foreground">
+                This is an individual competition. Team management is not enabled.
+              </p>
+            ) : teams.length > 0 ? (
+              <div className="grid gap-4 rounded-lg border bg-card p-4">
+                {teams.map((team) => (
+                  <section
+                    key={team.id}
+                    className="grid gap-3 rounded-md border bg-background p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4 className="break-words font-semibold">{team.name}</h4>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {team.members.length} member
+                          {team.members.length === 1 ? "" : "s"}
+                          {team.teamCode ? ` / Code ${team.teamCode}` : ""}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                          teamStatusStyles[team.status],
+                        )}
+                      >
+                        {team.status}
+                      </span>
+                    </div>
+
+                    {team.members.length > 0 ? (
+                      <div className="grid gap-2">
+                        {team.members.map((member) => (
+                          <div
+                            key={member.id}
+                            className="rounded-md bg-muted/40 px-3 py-2 text-sm"
+                          >
+                            <div className="font-medium">
+                              {member.student?.name ??
+                                "Student record unavailable"}
+                            </div>
+                            <p className="mt-1 break-words text-xs text-muted-foreground">
+                              {[
+                                member.role,
+                                member.student?.className,
+                                member.student?.gradeLevel,
+                                member.student?.studentCode,
+                              ]
+                                .filter(Boolean)
+                                .join(" / ") || "Member details not set"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                        No members assigned.
+                      </p>
+                    )}
+                  </section>
+                ))}
+
+                <section className="grid gap-3 rounded-md border bg-muted/30 p-4">
+                  <h4 className="font-semibold">No team assigned</h4>
+                  {unassignedEnrollments.length > 0 ? (
+                    <div className="grid gap-2">
+                      {unassignedEnrollments.map((enrollment) => (
+                        <StudentSummary
+                          key={enrollment.id}
+                          student={enrollment.student}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Every active registered student is assigned to an active team.
+                    </p>
+                  )}
+                </section>
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed bg-card px-4 py-4 text-sm text-muted-foreground">
+                No teams created yet.
+              </p>
+            )}
+          </DetailsSection>
+        </div>
+      </div>
     </div>
   );
 }
@@ -370,6 +693,7 @@ export function CompetitionList({
   studentOptions,
   teams,
 }: CompetitionListProps) {
+  const [detailsId, setDetailsId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [managingRosterId, setManagingRosterId] = useState<string | null>(null);
   const [managingTeamsId, setManagingTeamsId] = useState<string | null>(null);
@@ -399,6 +723,11 @@ export function CompetitionList({
           competition.participationMode !== "individual",
       ) ?? null,
     [competitions, managingTeamsId],
+  );
+  const detailsCompetition = useMemo(
+    () =>
+      competitions.find((competition) => competition.id === detailsId) ?? null,
+    [competitions, detailsId],
   );
   const editingCompetition = useMemo(
     () => competitions.find((competition) => competition.id === editingId) ?? null,
@@ -550,6 +879,15 @@ export function CompetitionList({
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={() => setDetailsId(competition.id)}
+                  >
+                    <Eye aria-hidden="true" />
+                    View Details
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setManagingRosterId(competition.id)}
                   >
                     <Users aria-hidden="true" />
@@ -587,6 +925,17 @@ export function CompetitionList({
           );
         })}
       </div>
+
+      {detailsCompetition ? (
+        <CompetitionDetailsModal
+          competition={detailsCompetition}
+          enrollments={enrollmentsByCompetition.get(detailsCompetition.id) ?? []}
+          teams={teams.filter(
+            (team) => team.competitionId === detailsCompetition.id,
+          )}
+          onClose={() => setDetailsId(null)}
+        />
+      ) : null}
 
       {managingRosterCompetition ? (
         <CompetitionRosterModal
