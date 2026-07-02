@@ -157,9 +157,9 @@ export function ActivityParticipantsManager({
               key={participant.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
+                  <span className="min-w-0 break-words font-medium">
                     {participant.student?.name ?? "Unknown student"}
                   </span>
                   {participant.student?.isMultiCompetition ? (
@@ -210,7 +210,7 @@ export function ActivityParticipantsManager({
             <span>Student</span>
             <select
               name="studentId"
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-normal outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
               defaultValue=""
               disabled={eligibleStudents.length === 0}
             >

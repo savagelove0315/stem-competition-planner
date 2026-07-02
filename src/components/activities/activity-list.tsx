@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   Archive,
@@ -73,6 +74,21 @@ const statusStyles: Record<ActivityStatus, string> = {
 
 function EmptyMetadata() {
   return <span className="text-muted-foreground">Not set</span>;
+}
+
+function ActivityDetail({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 rounded-md border bg-background px-3 py-2">
+      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-1 min-w-0 break-words text-sm">{children}</dd>
+    </div>
+  );
 }
 
 function formatDate(value: string | null) {
@@ -327,173 +343,146 @@ export function ActivityList({
         </Button>
       </div>
 
-      <div className="w-full min-w-0 overflow-x-auto">
-        <table className="w-full min-w-[1180px] text-left text-sm">
-          <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Activity name</th>
-              <th className="px-4 py-3 font-medium">Competition</th>
-              <th className="px-4 py-3 font-medium">Activity type</th>
-              <th className="px-4 py-3 font-medium">Start date</th>
-              <th className="px-4 py-3 font-medium">End date</th>
-              <th className="px-4 py-3 font-medium">Time</th>
-              <th className="px-4 py-3 font-medium">Location</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {activities.map((activity) => {
-              const competition = activity.competition;
-              const timeRange = formatTimeRange(activity);
-              const participants = participantsByActivity.get(activity.id) ?? [];
-              const isParticipantsExpanded = expandedParticipantIds.has(activity.id);
-              const participantsPanelId = `activity-${activity.id}-participants`;
+      <div className="grid min-w-0 gap-4 p-4 sm:p-5">
+        {activities.map((activity) => {
+          const competition = activity.competition;
+          const timeRange = formatTimeRange(activity);
+          const participants = participantsByActivity.get(activity.id) ?? [];
+          const isParticipantsExpanded = expandedParticipantIds.has(activity.id);
+          const participantsPanelId = `activity-${activity.id}-participants`;
 
-              return (
-                <Fragment key={activity.id}>
-                  <tr className="align-top">
-                    <td className="px-4 py-4">
-                      <div className="font-medium">{activity.name}</div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {participants.length} assigned student
-                        {participants.length === 1 ? "" : "s"}
-                      </p>
-                      {activity.description ? (
-                        <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
-                          {activity.description}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-4">
-                      {competition ? (
-                        <span
-                          className="inline-flex max-w-56 items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
-                          style={{
-                            borderColor: competition.color,
-                            backgroundColor: `${competition.color}1A`,
-                          }}
-                        >
-                          <span
-                            className="size-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: competition.color }}
-                            aria-hidden="true"
-                          />
-                          <span className="truncate">
-                            {competition.shortName ?? competition.name}
-                          </span>
-                        </span>
-                      ) : (
-                        <EmptyMetadata />
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      {activity.activityType ? (
-                        activity.activityType
-                      ) : (
-                        <EmptyMetadata />
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      {formatDate(activity.startsAt) ?? <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {formatDate(activity.endsAt) ?? <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {timeRange ?? <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {activity.location ? activity.location : <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
+          return (
+            <article
+              key={activity.id}
+              className="grid min-w-0 gap-4 rounded-lg border bg-background p-4 shadow-sm"
+            >
+              <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="min-w-0 break-words text-base font-semibold">
+                      {activity.name}
+                    </h3>
+                    {competition ? (
                       <span
-                        className={cn(
-                          "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
-                          statusStyles[activity.status],
-                        )}
+                        className="inline-flex max-w-full items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
+                        style={{
+                          borderColor: competition.color,
+                          backgroundColor: `${competition.color}1A`,
+                        }}
                       >
-                        {activity.status}
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: competition.color }}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 truncate">
+                          {competition.shortName ?? competition.name}
+                        </span>
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingId(activity.id)}
-                        >
-                          <Pencil aria-hidden="true" />
-                          Edit
-                        </Button>
-                        <StatusActionForm activity={activity} actionType="cancel" />
-                        <StatusActionForm activity={activity} actionType="archive" />
-                        <div className="border-l pl-2">
-                          <DeleteActivityForm activity={activity} />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
+                    ) : null}
+                    <span
+                      className={cn(
+                        "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                        statusStyles[activity.status],
+                      )}
+                    >
+                      {activity.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {participants.length} assigned student
+                    {participants.length === 1 ? "" : "s"}
+                  </p>
+                  {activity.description ? (
+                    <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-muted-foreground">
+                      {activity.description}
+                    </p>
+                  ) : null}
+                </div>
 
-                  <tr>
-                    <td className="bg-muted/20 px-4 py-4" colSpan={9}>
-                      <div className="grid gap-3 rounded-md border bg-background p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <Users
-                              className="size-4 text-muted-foreground"
-                              aria-hidden="true"
-                            />
-                            <div className="min-w-0">
-                              <h3 className="text-sm font-semibold">
-                                Assign participants
-                              </h3>
-                              <p className="text-xs text-muted-foreground">
-                                {participants.length} assigned student
-                                {participants.length === 1 ? "" : "s"}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            aria-controls={participantsPanelId}
-                            aria-expanded={isParticipantsExpanded}
-                            onClick={() => toggleParticipantManager(activity.id)}
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "transition-transform",
-                                isParticipantsExpanded ? "rotate-180" : "",
-                              )}
-                              aria-hidden="true"
-                            />
-                            {isParticipantsExpanded
-                              ? "Hide Participants"
-                              : "Manage Participants"}
-                          </Button>
-                        </div>
+                <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingId(activity.id)}
+                  >
+                    <Pencil aria-hidden="true" />
+                    Edit
+                  </Button>
+                  <StatusActionForm activity={activity} actionType="cancel" />
+                  <StatusActionForm activity={activity} actionType="archive" />
+                  <DeleteActivityForm activity={activity} />
+                  <Button
+                    type="button"
+                    size="sm"
+                    aria-controls={participantsPanelId}
+                    aria-expanded={isParticipantsExpanded}
+                    onClick={() => toggleParticipantManager(activity.id)}
+                  >
+                    <Users aria-hidden="true" />
+                    {isParticipantsExpanded
+                      ? "Hide Participants"
+                      : "Manage Participants"}
+                    <ChevronDown
+                      className={cn(
+                        "transition-transform",
+                        isParticipantsExpanded ? "rotate-180" : "",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </Button>
+                </div>
+              </div>
 
-                        {isParticipantsExpanded ? (
-                          <div id={participantsPanelId}>
-                            <ActivityParticipantsManager
-                              activityId={activity.id}
-                              competitionId={activity.competitionId}
-                              participants={participants}
-                              studentOptions={participantStudentOptions}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+              <dl className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <ActivityDetail label="Competition">
+                  {competition ? competition.shortName ?? competition.name : <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="Activity type">
+                  {activity.activityType ? activity.activityType : <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="Start date">
+                  {formatDate(activity.startsAt) ?? <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="End date">
+                  {formatDate(activity.endsAt) ?? <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="Time">
+                  {timeRange ?? <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="Location">
+                  {activity.location ? activity.location : <EmptyMetadata />}
+                </ActivityDetail>
+                <ActivityDetail label="Status">
+                  <span
+                    className={cn(
+                      "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                      statusStyles[activity.status],
+                    )}
+                  >
+                    {activity.status}
+                  </span>
+                </ActivityDetail>
+                <ActivityDetail label="Assigned participants">
+                  {participants.length} student
+                  {participants.length === 1 ? "" : "s"}
+                </ActivityDetail>
+              </dl>
+
+              {isParticipantsExpanded ? (
+                <div id={participantsPanelId} className="min-w-0">
+                  <ActivityParticipantsManager
+                    activityId={activity.id}
+                    competitionId={activity.competitionId}
+                    participants={participants}
+                    studentOptions={participantStudentOptions}
+                  />
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
 
       {editingActivity ? (
