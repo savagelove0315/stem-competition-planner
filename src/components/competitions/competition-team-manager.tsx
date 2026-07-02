@@ -1,7 +1,8 @@
 "use client";
 
 import type React from "react";
-import { useActionState, useMemo } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   Pencil,
@@ -33,10 +34,36 @@ type CompetitionTeamManagerProps = {
   teams: CompetitionTeam[];
 };
 
+type TeamFeedback = {
+  status: "success" | "error";
+  message: string;
+};
+
 const initialState: TeamActionState = {
   status: "idle",
   message: null,
 };
+
+function useRefreshOnActionState(
+  state: TeamActionState,
+  onFeedback?: (feedback: TeamFeedback) => void,
+) {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.status === "idle" || !state.message) {
+      return;
+    }
+
+    if (state.status === "success" || state.status === "error") {
+      onFeedback?.({ status: state.status, message: state.message });
+    }
+
+    if (state.status === "success") {
+      router.refresh();
+    }
+  }, [onFeedback, router, state.message, state.status]);
+}
 
 function SubmitButton({
   children,
@@ -59,8 +86,8 @@ function SubmitButton({
   );
 }
 
-function ActionMessage({ state }: { state: TeamActionState }) {
-  if (!state.message) {
+function FeedbackMessage({ feedback }: { feedback: TeamFeedback | null }) {
+  if (!feedback) {
     return null;
   }
 
@@ -68,18 +95,34 @@ function ActionMessage({ state }: { state: TeamActionState }) {
     <p
       className={cn(
         "rounded-md border px-3 py-2 text-xs",
-        state.status === "success"
+        feedback.status === "success"
           ? "border-primary/30 bg-primary/10 text-primary"
           : "border-destructive/30 bg-destructive/10 text-destructive",
       )}
     >
-      {state.message}
+      {feedback.message}
     </p>
+  );
+}
+
+function ActionMessage({ state }: { state: TeamActionState }) {
+  if (!state.message) {
+    return null;
+  }
+
+  return (
+    <FeedbackMessage
+      feedback={{
+        status: state.status === "success" ? "success" : "error",
+        message: state.message,
+      }}
+    />
   );
 }
 
 function CreateTeamForm({ competition }: { competition: Competition }) {
   const [state, formAction] = useActionState(createTeamAction, initialState);
+  useRefreshOnActionState(state);
 
   return (
     <form action={formAction} className="grid gap-3 rounded-md border p-4">
@@ -118,6 +161,7 @@ function UpdateTeamForm({
   team: CompetitionTeam;
 }) {
   const [state, formAction] = useActionState(updateTeamAction, initialState);
+  useRefreshOnActionState(state);
 
   return (
     <form action={formAction} className="grid gap-2">
@@ -149,6 +193,7 @@ function UpdateTeamForm({
 function DeleteTeamForm({ team }: { team: CompetitionTeam }) {
   const [state, formAction] = useActionState(deleteTeamAction, initialState);
   const hasActiveMembers = team.members.length > 0;
+  useRefreshOnActionState(state);
 
   return (
     <form
@@ -184,12 +229,15 @@ function AssignStudentForm({
   competition,
   team,
   unassignedEnrollments,
+  onFeedback,
 }: {
   competition: Competition;
   team: CompetitionTeam;
   unassignedEnrollments: CompetitionEnrollment[];
+  onFeedback: (feedback: TeamFeedback) => void;
 }) {
   const [state, formAction] = useActionState(assignTeamMemberAction, initialState);
+  useRefreshOnActionState(state, onFeedback);
 
   return (
     <form action={formAction} className="grid gap-2 rounded-md border bg-muted/30 p-3">
@@ -241,11 +289,14 @@ function AssignStudentForm({
 function RemoveMemberForm({
   memberId,
   studentName,
+  onFeedback,
 }: {
   memberId: string;
   studentName: string;
+  onFeedback: (feedback: TeamFeedback) => void;
 }) {
   const [state, formAction] = useActionState(removeTeamMemberAction, initialState);
+  useRefreshOnActionState(state, onFeedback);
 
   return (
     <form action={formAction} className="grid gap-1">
@@ -269,6 +320,7 @@ export function CompetitionTeamManager({
   enrollments,
   teams,
 }: CompetitionTeamManagerProps) {
+  const [feedback, setFeedback] = useState<TeamFeedback | null>(null);
   const assignedStudentIds = useMemo(
     () =>
       new Set(
@@ -312,6 +364,7 @@ export function CompetitionTeamManager({
           </div>
         </div>
       </div>
+      <FeedbackMessage feedback={feedback} />
 
       <CreateTeamForm competition={competition} />
 
@@ -354,6 +407,7 @@ export function CompetitionTeamManager({
                         <RemoveMemberForm
                           memberId={member.id}
                           studentName={studentName}
+                          onFeedback={setFeedback}
                         />
                       </div>
                     );
@@ -369,6 +423,7 @@ export function CompetitionTeamManager({
                 competition={competition}
                 team={team}
                 unassignedEnrollments={unassignedEnrollments}
+                onFeedback={setFeedback}
               />
             </section>
           ))}
