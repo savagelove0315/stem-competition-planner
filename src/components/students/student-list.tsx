@@ -51,6 +51,16 @@ function getStudentName(student: StudentWithCompetitions) {
   );
 }
 
+function getStudentSecondaryDetails(student: StudentWithCompetitions) {
+  const details = [
+    student.className ? `Class ${student.className}` : null,
+    student.gradeLevel ? `Grade ${student.gradeLevel}` : null,
+    student.studentCode ? `Code ${student.studentCode}` : null,
+  ].filter(Boolean);
+
+  return details.length > 0 ? details.join(" / ") : "Profile details not set";
+}
+
 function ArchiveSubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
 
@@ -200,50 +210,70 @@ export function StudentList({
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[1220px] text-left text-sm">
-            <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Student name</th>
-                <th className="px-4 py-3 font-medium">Student code</th>
-                <th className="px-4 py-3 font-medium">Class</th>
-                <th className="px-4 py-3 font-medium">Grade / year</th>
-                <th className="px-4 py-3 font-medium">Competitions joined</th>
-                <th className="px-4 py-3 font-medium">Count</th>
-                <th className="px-4 py-3 font-medium">Multi-competition</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {students.map((student) => {
-                const competitionCount = student.competitionAssignments.length;
-                const isMultiCompetition = competitionCount >= 2;
+        <div className="grid min-w-0 gap-4 p-4 sm:p-5">
+          {students.map((student) => {
+            const competitionCount = student.competitionAssignments.length;
+            const isMultiCompetition = competitionCount >= 2;
 
-                return (
-                  <tr key={student.id} className="align-top">
-                    <td className="px-4 py-4">
-                      <div className="font-medium">{getStudentName(student)}</div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {student.firstName} {student.lastName}
+            return (
+              <article
+                key={student.id}
+                className="grid min-w-0 gap-4 rounded-lg border bg-background p-4 shadow-sm"
+              >
+                <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                  <div className="min-w-0 space-y-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="min-w-0 break-words text-base font-semibold">
+                          {getStudentName(student)}
+                        </h3>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
+                            statusStyles[student.status],
+                          )}
+                        >
+                          {student.status}
+                        </span>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-md border px-2 py-1 text-xs font-medium",
+                            isMultiCompetition
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border bg-background text-muted-foreground",
+                          )}
+                        >
+                          {isMultiCompetition
+                            ? "Multi-competition"
+                            : "Single competition"}
+                        </span>
+                      </div>
+                      <p className="mt-1 break-words text-xs text-muted-foreground">
+                        {getStudentSecondaryDetails(student)}
                       </p>
-                    </td>
-                    <td className="px-4 py-4">
-                      {student.studentCode ? student.studentCode : <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {student.className ? student.className : <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
-                      {student.gradeLevel ? student.gradeLevel : <EmptyMetadata />}
-                    </td>
-                    <td className="px-4 py-4">
+                      {student.displayName ? (
+                        <p className="mt-1 break-words text-xs text-muted-foreground">
+                          Full name: {[student.firstName, student.lastName]
+                            .filter(Boolean)
+                            .join(" ") || <EmptyMetadata />}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="grid gap-2">
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-medium">
+                          {competitionCount} competition
+                          {competitionCount === 1 ? "" : "s"}
+                        </span>
+                        <span className="text-muted-foreground">joined</span>
+                      </div>
                       {competitionCount > 0 ? (
-                        <div className="flex max-w-md flex-wrap gap-2">
+                        <div className="flex min-w-0 flex-wrap gap-2">
                           {student.competitionAssignments.map((assignment) => (
                             <span
                               key={assignment.id}
-                              className="inline-flex max-w-48 items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
+                              className="inline-flex max-w-full items-center gap-2 rounded-md border px-2 py-1 text-xs font-medium"
                               style={{
                                 borderColor: assignment.competition.color,
                                 backgroundColor: `${assignment.competition.color}1A`,
@@ -256,7 +286,7 @@ export function StudentList({
                                 }}
                                 aria-hidden="true"
                               />
-                              <span className="truncate">
+                              <span className="min-w-0 break-words">
                                 {assignment.competition.shortName ??
                                   assignment.competition.name}
                               </span>
@@ -264,54 +294,42 @@ export function StudentList({
                           ))}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">None assigned</span>
+                        <span className="text-sm text-muted-foreground">
+                          None assigned
+                        </span>
                       )}
-                    </td>
-                    <td className="px-4 py-4 font-medium">{competitionCount}</td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-md border px-2 py-1 text-xs font-medium",
-                          isMultiCompetition
-                            ? "border-primary/30 bg-primary/10 text-primary"
-                            : "border-border bg-background text-muted-foreground",
-                        )}
-                      >
-                        {isMultiCompetition ? "Yes" : "No"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-md border px-2 py-1 text-xs font-medium capitalize",
-                          statusStyles[student.status],
-                        )}
-                      >
-                        {student.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingId(student.id)}
-                        >
-                          <Pencil aria-hidden="true" />
-                          Edit
-                        </Button>
-                        <ArchiveStudentForm student={student} />
-                        <div className="border-l pl-2">
-                          <DeleteStudentForm student={student} />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-0 flex-wrap gap-2 xl:max-w-md xl:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingId(student.id)}
+                    >
+                      <Pencil aria-hidden="true" />
+                      Edit
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/competitions">
+                        <Users aria-hidden="true" />
+                        Register to Competition
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/student-timeline">
+                        <ListChecks aria-hidden="true" />
+                        View Timeline
+                      </Link>
+                    </Button>
+                    <ArchiveStudentForm student={student} />
+                    <DeleteStudentForm student={student} />
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
