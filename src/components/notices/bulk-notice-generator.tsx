@@ -54,7 +54,7 @@ export function BulkNoticeGenerator({
     .join("\n\n---\n\n");
 
   return (
-    <div className="grid min-w-0 gap-6 xl:grid-cols-[0.38fr_0.62fr]">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-4">
         <BulkStudentSelector
           students={students}
@@ -74,36 +74,47 @@ export function BulkNoticeGenerator({
           </section>
         ) : null}
 
-        <NoticeActions
-          noticeText={allNoticeText}
-          disabled={printableStudents.length === 0}
-          copyLabel="Copy all notice text"
-          printLabel="Print selected notices"
-        />
       </div>
 
-      {selectedStudents.length === 0 ? (
-        <EmptyBulkState
-          title="No students selected"
-          message="Select one or more students with competition registrations to generate bulk parent notices."
-        />
-      ) : printableStudents.length === 0 ? (
-        <EmptyBulkState
-          title="Selected students have no registered competitions"
-          message="Register students under competitions first, then return here to print notices."
-        />
-      ) : (
-        <div className="notice-print-scope flex min-w-0 flex-col gap-6">
-          {printableStudents.map((student) => (
-            <ParentNoticePreview
-              key={student.id}
-              student={student}
-              assignments={student.competitionAssignments}
-              settings={settings}
-            />
-          ))}
+      <div className="min-w-0">
+        <div className="notice-print-hidden sticky top-4 z-10 mb-4 rounded-lg border bg-card/95 p-3 shadow-sm backdrop-blur">
+          <NoticeActions
+            noticeText={allNoticeText}
+            disabled={printableStudents.length === 0}
+            copyLabel="Copy all notice text"
+            printLabel="Print selected notices"
+          />
         </div>
-      )}
+
+        {selectedStudents.length === 0 ? (
+          <EmptyBulkState
+            title="No students selected"
+            message="Select one or more students with competition registrations to generate bulk parent notices."
+          />
+        ) : printableStudents.length === 0 ? (
+          <EmptyBulkState
+            title="Selected students have no registered competitions"
+            message="Register students under competitions first, then return here to print notices."
+          />
+        ) : (
+          <div className="notice-print-scope min-w-0">
+            <div className="notice-screen-preview-shell flex min-w-0 flex-col gap-6 overflow-x-auto rounded-lg border bg-muted/40 p-3 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
+              {printableStudents.map((student) => (
+                <div
+                  key={student.id}
+                  className="notice-screen-preview mx-auto w-full max-w-[900px]"
+                >
+                  <ParentNoticePreview
+                    student={student}
+                    assignments={student.competitionAssignments}
+                    settings={settings}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

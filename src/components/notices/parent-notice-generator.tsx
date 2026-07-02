@@ -76,25 +76,34 @@ export function ParentNoticeGenerator({
       </div>
 
       {mode === "single" ? (
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[0.35fr_0.65fr]">
-          <div className="flex min-w-0 flex-col gap-4">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
+          <div className="min-w-0">
             <NoticeStudentSelector
               students={students}
               selectedStudentId={selectedStudentId}
               onSelectedStudentIdChange={setSelectedStudentId}
             />
-            <NoticeActions
-              noticeText={noticeText}
-              disabled={!hasPrintableNotice}
-            />
           </div>
 
-          <div className="notice-print-scope">
-            <ParentNoticePreview
-              student={selectedStudent}
-              assignments={assignments}
-              settings={settings}
-            />
+          <div className="min-w-0">
+            <div className="notice-print-hidden sticky top-4 z-10 mb-4 rounded-lg border bg-card/95 p-3 shadow-sm backdrop-blur">
+              <NoticeActions
+                noticeText={noticeText}
+                disabled={!hasPrintableNotice}
+              />
+            </div>
+
+            <div className="notice-print-scope min-w-0">
+              <div className="notice-screen-preview-shell overflow-x-auto rounded-lg border bg-muted/40 p-3 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
+                <div className="notice-screen-preview mx-auto w-full max-w-[900px]">
+                  <ParentNoticePreview
+                    student={selectedStudent}
+                    assignments={assignments}
+                    settings={settings}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (

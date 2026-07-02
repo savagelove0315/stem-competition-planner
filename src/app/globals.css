@@ -82,6 +82,21 @@
     overflow: visible !important;
   }
 
+  body.printing-notice .notice-screen-preview-shell {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  body.printing-notice .notice-screen-preview {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
   body.printing-notice .notice-print-area,
   body.printing-notice .notice-print-area * {
     visibility: visible;
