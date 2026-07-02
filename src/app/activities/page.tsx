@@ -30,6 +30,7 @@ export default async function ActivitiesPage() {
     shortName: competition.shortName,
     color: competition.color,
     status: competition.status,
+    participationMode: competition.participationMode,
   }));
 
   return (

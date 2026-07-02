@@ -10,6 +10,7 @@ export type JsonValue =
 
 export type TeacherStatus = "active" | "inactive" | "archived";
 export type CompetitionStatus = "draft" | "planned" | "active" | "completed" | "archived";
+export type ParticipationMode = "individual" | "team" | "mixed";
 export type StudentStatus = "active" | "inactive" | "archived";
 export type StudentCompetitionStatus = "registered" | "waitlisted" | "withdrawn" | "completed";
 export type ActivityStatus = "draft" | "planned" | "active" | "completed" | "cancelled" | "archived";
@@ -48,6 +49,7 @@ export type Competition = {
   category: string | null;
   noticeMode: string | null;
   noticePeriod: string | null;
+  participationMode: ParticipationMode;
   description: string | null;
   status: CompetitionStatus;
   startsAt: Timestamp | null;

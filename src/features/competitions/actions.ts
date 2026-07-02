@@ -35,6 +35,7 @@ function readCompetitionForm(formData: FormData) {
     category: getFormValue(formData, "category"),
     noticeMode: getFormValue(formData, "noticeMode"),
     noticePeriod: getFormValue(formData, "noticePeriod"),
+    participationMode: getFormValue(formData, "participationMode"),
     description: getFormValue(formData, "description"),
     status: getFormValue(formData, "status"),
     startsAt: getFormValue(formData, "startsAt"),
@@ -68,6 +69,7 @@ function toCompetitionPayload(values: CompetitionFormValues) {
     category: values.category,
     notice_mode: values.noticeMode,
     notice_period: values.noticePeriod,
+    participation_mode: values.participationMode,
     description: values.description,
     status: values.status,
     starts_at: values.startsAt,
@@ -76,6 +78,12 @@ function toCompetitionPayload(values: CompetitionFormValues) {
     registration_closes_at: values.registrationClosesAt,
     notes: values.notes,
   };
+}
+
+function revalidateCompetitionSurfaces() {
+  revalidatePath("/competitions");
+  revalidatePath("/dashboard");
+  revalidatePath("/teams");
 }
 
 type CompetitionDeleteSafety = {
@@ -177,6 +185,23 @@ async function deleteSafeCompetitionJoins(
   }
 }
 
+async function competitionHasActiveTeams(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  competitionId: string,
+) {
+  const { count, error } = await supabase
+    .from("teams")
+    .select("id", { count: "exact", head: true })
+    .eq("competition_id", competitionId)
+    .eq("status", "active");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (count ?? 0) > 0;
+}
+
 export async function createCompetitionAction(
   _previousState: CompetitionActionState,
   formData: FormData,
@@ -200,7 +225,7 @@ export async function createCompetitionAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/competitions");
+    revalidateCompetitionSurfaces();
     return { status: "success", message: "Competition added." };
   } catch (error) {
     return {
@@ -230,6 +255,18 @@ export async function updateCompetitionAction(
 
   try {
     const supabase = await requireAuthenticatedClient();
+
+    if (
+      parsed.data.participationMode === "individual" &&
+      (await competitionHasActiveTeams(supabase, id.data))
+    ) {
+      return {
+        status: "error",
+        message:
+          "This competition has active teams. Remove teams first before changing to Individual.",
+      };
+    }
+
     const { error } = await supabase
       .from("competitions")
       .update(toCompetitionPayload(parsed.data))
@@ -239,7 +276,7 @@ export async function updateCompetitionAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/competitions");
+    revalidateCompetitionSurfaces();
     return { status: "success", message: "Competition updated." };
   } catch (error) {
     return {
@@ -270,7 +307,7 @@ export async function archiveCompetitionAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/competitions");
+    revalidateCompetitionSurfaces();
     return { status: "success", message: "Competition archived." };
   } catch (error) {
     return {
@@ -313,7 +350,7 @@ export async function deleteCompetitionAction(
       return { status: "error", message: error.message };
     }
 
-    revalidatePath("/competitions");
+    revalidateCompetitionSurfaces();
     return { status: "success", message: "Competition deleted." };
   } catch (error) {
     console.error("Competition delete failed", error);

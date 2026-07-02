@@ -20,6 +20,7 @@ supabase/migrations/003_add_competition_metadata.sql
 supabase/migrations/004_add_student_profile_fields.sql
 supabase/migrations/010_add_competition_notice_fields.sql
 supabase/migrations/012_add_team_management_safety.sql
+supabase/migrations/014_add_competition_participation_mode.sql
 ```
 
 Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
@@ -32,6 +33,10 @@ Migration `012_add_team_management_safety.sql` keeps the existing generic team
 tables and adds MVP safety rules: one active team per student per competition,
 active team members must be registered to that competition, and teams with
 active members cannot be deleted.
+
+Migration `014_add_competition_participation_mode.sql` adds a generic
+`participation_mode` field to competitions so individual, team, and mixed
+participation workflows can be selected per competition record.
 
 ## Tables
 
@@ -49,6 +54,7 @@ Key columns:
 - `category text`
 - `notice_mode text`
 - `notice_period text`
+- `participation_mode text`
 - `description text`
 - `status text`
 - `starts_at timestamptz`
@@ -68,6 +74,7 @@ Metadata columns:
 - `category` is an optional grouping label for filtering, reporting, and organizing competitions.
 - `notice_mode` is an optional parent-facing format label used by generated notices.
 - `notice_period` is an optional flexible parent-facing period label used by generated notices when exact timestamps are not the clearest wording.
+- `participation_mode` controls whether planner surfaces treat the competition as individual, team, or mixed participation.
 
 Status values:
 
@@ -76,6 +83,12 @@ Status values:
 - `active`
 - `completed`
 - `archived`
+
+Participation mode values:
+
+- `individual`
+- `team`
+- `mixed`
 
 ### `students`
 

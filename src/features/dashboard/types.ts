@@ -1,6 +1,7 @@
 import type {
   ActivityStatus,
   CompetitionStatus,
+  ParticipationMode,
   StudentStatus,
 } from "@/types/database";
 import type { DetectedConflict } from "@/features/conflicts/types";
@@ -11,6 +12,7 @@ export type DashboardCompetition = {
   shortName: string | null;
   color: string;
   status: CompetitionStatus;
+  participationMode: ParticipationMode;
 };
 
 export type DashboardStudent = {

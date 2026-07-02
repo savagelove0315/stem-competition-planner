@@ -9,6 +9,7 @@ type CompetitionRow = {
   short_name: string | null;
   color: string;
   status: Competition["status"];
+  participation_mode: Competition["participationMode"];
 };
 
 type ActivityRow = {
@@ -31,7 +32,7 @@ type ActivityRow = {
 
 export type ActivityCompetitionOption = Pick<
   Competition,
-  "id" | "name" | "shortName" | "color" | "status"
+  "id" | "name" | "shortName" | "color" | "status" | "participationMode"
 >;
 
 export type ActivityWithCompetition = Activity & {
@@ -45,6 +46,7 @@ function mapCompetitionOption(row: CompetitionRow): ActivityCompetitionOption {
     shortName: row.short_name,
     color: row.color,
     status: row.status,
+    participationMode: row.participation_mode,
   };
 }
 
@@ -93,7 +95,8 @@ export async function listActivities(): Promise<ActivityWithCompetition[]> {
           name,
           short_name,
           color,
-          status
+          status,
+          participation_mode
         )
       `,
     )
@@ -113,7 +116,7 @@ export async function listActivityCompetitionOptions(): Promise<
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("competitions")
-    .select("id,name,short_name,color,status")
+    .select("id,name,short_name,color,status,participation_mode")
     .order("name", { ascending: true });
 
   if (error) {

@@ -47,6 +47,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       shortName: competition.shortName,
       color: competition.color,
       status: competition.status,
+      participationMode: competition.participationMode,
     })),
     students: students.map((student) => ({
       id: student.id,

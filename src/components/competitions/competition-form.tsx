@@ -10,7 +10,10 @@ import {
   updateCompetitionAction,
   type CompetitionActionState,
 } from "@/features/competitions/actions";
-import { competitionStatuses } from "@/features/competitions/schemas";
+import {
+  competitionStatuses,
+  participationModes,
+} from "@/features/competitions/schemas";
 import { cn } from "@/lib/utils";
 import type { Competition } from "@/types/database";
 
@@ -80,6 +83,7 @@ export function CompetitionForm({
     name: `${formId}-name`,
     shortName: `${formId}-shortName`,
     status: `${formId}-status`,
+    participationMode: `${formId}-participationMode`,
     color: `${formId}-color`,
     icon: `${formId}-icon`,
     category: `${formId}-category`,
@@ -165,6 +169,37 @@ export function CompetitionForm({
             ))}
           </select>
           <FieldError errors={state.fieldErrors?.status} />
+        </div>
+
+        <div className="grid gap-2 md:col-span-2">
+          <label
+            className="text-sm font-medium"
+            htmlFor={fieldIds.participationMode}
+          >
+            Participation Mode
+          </label>
+          <select
+            id={fieldIds.participationMode}
+            name="participationMode"
+            defaultValue={competition?.participationMode ?? "individual"}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {participationModes.map((modeValue) => (
+              <option key={modeValue} value={modeValue}>
+                {modeValue === "individual"
+                  ? "Individual"
+                  : modeValue === "team"
+                    ? "Team"
+                    : "Mixed"}
+              </option>
+            ))}
+          </select>
+          <div className="grid gap-1 text-xs text-muted-foreground">
+            <p>Individual: Students join individually.</p>
+            <p>Team: Students are grouped into teams.</p>
+            <p>Mixed: Allows both team and individual participants.</p>
+          </div>
+          <FieldError errors={state.fieldErrors?.participationMode} />
         </div>
 
         <div className="grid gap-2">

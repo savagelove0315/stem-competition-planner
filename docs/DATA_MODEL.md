@@ -48,6 +48,7 @@ Competitions include generic metadata for display and organization:
 - `category` for grouping, filtering, and reporting.
 - `notice_mode` for the parent-facing competition format shown in generated notices.
 - `notice_period` for flexible parent-facing timing text shown in generated notices.
+- `participation_mode` for whether participants are managed individually, in teams, or both.
 
 These values are stored on `competitions` because they describe a competition record. They must remain configurable data and must not become route names, enum values, permissions, or branching logic.
 
@@ -70,6 +71,17 @@ competitions.id
 ```
 
 This supports any number of competitions and keeps participation queryable without string parsing.
+
+`competitions.participation_mode` describes how a competition organizes those
+registered students:
+
+- `individual` means registered students participate directly without team grouping.
+- `team` means registered students are expected to be grouped into teams.
+- `mixed` means both team-based and individual/no-team participation are valid.
+
+Participation mode changes planner UI behavior, such as showing team management
+only for team or mixed competitions. It must remain generic metadata and must
+not encode any named competition as a special case.
 
 ## Student Profile
 

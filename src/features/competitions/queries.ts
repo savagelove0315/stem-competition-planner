@@ -1,7 +1,11 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Competition, CompetitionStatus } from "@/types/database";
+import type {
+  Competition,
+  CompetitionStatus,
+  ParticipationMode,
+} from "@/types/database";
 
 type CompetitionRow = {
   id: string;
@@ -12,6 +16,7 @@ type CompetitionRow = {
   category: string | null;
   notice_mode: string | null;
   notice_period: string | null;
+  participation_mode: ParticipationMode;
   description: string | null;
   status: CompetitionStatus;
   starts_at: string | null;
@@ -34,6 +39,7 @@ function mapCompetition(row: CompetitionRow): Competition {
     category: row.category,
     noticeMode: row.notice_mode,
     noticePeriod: row.notice_period,
+    participationMode: row.participation_mode,
     description: row.description,
     status: row.status,
     startsAt: row.starts_at,
@@ -61,6 +67,7 @@ export async function listCompetitions(): Promise<Competition[]> {
         "category",
         "notice_mode",
         "notice_period",
+        "participation_mode",
         "description",
         "status",
         "starts_at",

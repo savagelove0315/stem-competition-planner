@@ -8,6 +8,8 @@ export const competitionStatuses = [
   "archived",
 ] as const;
 
+export const participationModes = ["individual", "team", "mixed"] as const;
+
 const optionalText = z
   .string()
   .trim()
@@ -54,6 +56,9 @@ export const competitionFormSchema = z
       120,
       "Estimated period for notice must be 120 characters or fewer.",
     ),
+    participationMode: z.enum(participationModes, {
+      error: "Choose a valid participation mode.",
+    }),
     description: optionalText,
     status: z.enum(competitionStatuses, {
       error: "Choose a valid competition status.",

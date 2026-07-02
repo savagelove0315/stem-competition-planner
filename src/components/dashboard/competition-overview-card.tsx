@@ -7,6 +7,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { CompetitionOverview } from "@/features/dashboard/types";
 
+const participationModeLabels = {
+  individual: "Individual",
+  team: "Team",
+  mixed: "Mixed",
+} as const;
+
 type CompetitionOverviewCardProps = {
   competitions: CompetitionOverview[];
   hasCompetitions: boolean;
@@ -61,6 +67,11 @@ export function CompetitionOverviewCard({
         <div className="divide-y">
           {competitions.map((competition) => {
             const isExpanded = expandedCompetitionIds.has(competition.id);
+            const supportsTeams = competition.participationMode !== "individual";
+            const unassignedHeading =
+              competition.participationMode === "mixed"
+                ? "Individual / No team assigned"
+                : "No team assigned";
 
             return (
               <div key={competition.id} className="grid gap-3 px-5 py-4">
@@ -86,6 +97,9 @@ export function CompetitionOverviewCard({
                       <span className="rounded-md border bg-muted px-2 py-1 text-xs font-medium capitalize">
                         {competition.status}
                       </span>
+                      <span className="rounded-md border bg-background px-2 py-1 text-xs font-medium">
+                        {participationModeLabels[competition.participationMode]}
+                      </span>
                     </span>
                     <span className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
                       <span>
@@ -97,53 +111,63 @@ export function CompetitionOverviewCard({
                         {competition.participantAssignmentCount} participant
                         assignments
                       </span>
-                      <span>{competition.teamCount} teams</span>
+                      {supportsTeams ? (
+                        <span>{competition.teamCount} teams</span>
+                      ) : null}
                     </span>
                   </span>
                 </button>
 
                 {isExpanded ? (
                   <div className="ml-8 grid gap-3 rounded-md border bg-background p-4">
-                    {competition.teams.length > 0 ? (
-                      <div className="grid gap-3">
-                        {competition.teams.map((team) => (
-                          <section key={team.id} className="grid gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <UsersRound
-                                className="size-4 text-muted-foreground"
-                                aria-hidden="true"
-                              />
-                              <h4 className="font-medium">{team.name}</h4>
-                              <span className="rounded-md border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                {team.members.length} student
-                                {team.members.length === 1 ? "" : "s"}
-                              </span>
-                            </div>
-                            {team.members.length > 0 ? (
-                              <ul className="grid gap-1 pl-6 text-sm text-muted-foreground">
-                                {team.members.map((member) => (
-                                  <li key={member.id}>
-                                    {member.studentName}
-                                    {member.role ? ` / ${member.role}` : ""}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="pl-6 text-sm text-muted-foreground">
-                                No students assigned.
-                              </p>
-                            )}
-                          </section>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No teams have been created for this competition.
-                      </p>
-                    )}
+                    {supportsTeams ? (
+                      competition.teams.length > 0 ? (
+                        <div className="grid gap-3">
+                          {competition.teams.map((team) => (
+                            <section key={team.id} className="grid gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <UsersRound
+                                  className="size-4 text-muted-foreground"
+                                  aria-hidden="true"
+                                />
+                                <h4 className="font-medium">{team.name}</h4>
+                                <span className="rounded-md border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                  {team.members.length} student
+                                  {team.members.length === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                              {team.members.length > 0 ? (
+                                <ul className="grid gap-1 pl-6 text-sm text-muted-foreground">
+                                  {team.members.map((member) => (
+                                    <li key={member.id}>
+                                      {member.studentName}
+                                      {member.role ? ` / ${member.role}` : ""}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="pl-6 text-sm text-muted-foreground">
+                                  No students assigned.
+                                </p>
+                              )}
+                            </section>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No teams have been created for this competition.
+                        </p>
+                      )
+                    ) : null}
 
-                    <section className="grid gap-2 border-t pt-3">
-                      <h4 className="font-medium">No team assigned</h4>
+                    <section
+                      className={
+                        supportsTeams ? "grid gap-2 border-t pt-3" : "grid gap-2"
+                      }
+                    >
+                      <h4 className="font-medium">
+                        {supportsTeams ? unassignedHeading : "Registered students"}
+                      </h4>
                       {competition.unassignedStudents.length > 0 ? (
                         <ul className="grid gap-1 text-sm text-muted-foreground">
                           {competition.unassignedStudents.map((student) => (
@@ -152,7 +176,9 @@ export function CompetitionOverviewCard({
                         </ul>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          No active registered students are waiting for a team.
+                          {supportsTeams
+                            ? "No active registered students are waiting for a team."
+                            : "No active registered students yet."}
                         </p>
                       )}
                     </section>

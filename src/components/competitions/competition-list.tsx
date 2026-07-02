@@ -20,7 +20,11 @@ import {
   type CompetitionActionState,
 } from "@/features/competitions/actions";
 import { cn } from "@/lib/utils";
-import type { Competition, CompetitionStatus } from "@/types/database";
+import type {
+  Competition,
+  CompetitionStatus,
+  ParticipationMode,
+} from "@/types/database";
 
 type CompetitionListProps = {
   competitions: Competition[];
@@ -64,6 +68,12 @@ const statusStyles: Record<CompetitionStatus, string> = {
   active: "border-primary/30 bg-primary/10 text-primary",
   completed: "border-secondary/40 bg-secondary/15 text-secondary-foreground",
   archived: "border-border bg-background text-muted-foreground",
+};
+
+const participationModeLabels: Record<ParticipationMode, string> = {
+  individual: "Individual",
+  team: "Team",
+  mixed: "Mixed",
 };
 
 function EmptyMetadata() {
@@ -367,8 +377,11 @@ export function CompetitionList({
   );
   const managingTeamsCompetition = useMemo(
     () =>
-      competitions.find((competition) => competition.id === managingTeamsId) ??
-      null,
+      competitions.find(
+        (competition) =>
+          competition.id === managingTeamsId &&
+          competition.participationMode !== "individual",
+      ) ?? null,
     [competitions, managingTeamsId],
   );
   const editingCompetition = useMemo(
@@ -406,7 +419,7 @@ export function CompetitionList({
       </div>
 
       <div className="w-full min-w-0 overflow-x-auto">
-        <table className="w-full min-w-[1120px] text-left text-sm">
+        <table className="w-full min-w-[1240px] text-left text-sm">
           <thead className="border-b bg-muted/60 text-xs uppercase tracking-normal text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Name</th>
@@ -414,6 +427,7 @@ export function CompetitionList({
               <th className="px-4 py-3 font-medium">Color</th>
               <th className="px-4 py-3 font-medium">Icon</th>
               <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Participation</th>
               <th className="px-4 py-3 font-medium">Notice details</th>
               <th className="px-4 py-3 font-medium">Students</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -465,6 +479,11 @@ export function CompetitionList({
                       )}
                     </td>
                     <td className="px-4 py-4">
+                      <span className="inline-flex rounded-md border bg-background px-2 py-1 text-xs font-medium">
+                        {participationModeLabels[competition.participationMode]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="grid gap-1 text-xs">
                         <div>
                           <span className="font-medium">Mode: </span>
@@ -511,15 +530,22 @@ export function CompetitionList({
                           <Users aria-hidden="true" />
                           Manage Students
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setManagingTeamsId(competition.id)}
-                        >
-                          <UsersRound aria-hidden="true" />
-                          Manage Teams
-                        </Button>
+                        {competition.participationMode === "individual" ? (
+                          <p className="max-w-44 text-xs text-muted-foreground">
+                            Change participation mode to Team or Mixed to manage
+                            teams.
+                          </p>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setManagingTeamsId(competition.id)}
+                          >
+                            <UsersRound aria-hidden="true" />
+                            Manage Teams
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="outline"
