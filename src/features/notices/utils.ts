@@ -11,6 +11,7 @@ import type {
   TrainingNoticeActivityFilters,
   TrainingNoticeStudent,
 } from "./types";
+import { formatPlainTimeRange } from "@/lib/plain-date-time";
 
 const EMPTY_NOTICE_VALUE = "To be announced";
 
@@ -62,23 +63,7 @@ export function formatTrainingNoticeDate(value: string | null) {
 }
 
 export function formatTrainingNoticeTime(activity: TrainingNoticeActivity) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "Asia/Kuching",
-  });
-  const startTime = activity.startsAt
-    ? formatter.format(new Date(activity.startsAt))
-    : null;
-  const endTime = activity.endsAt
-    ? formatter.format(new Date(activity.endsAt))
-    : null;
-
-  if (startTime && endTime) {
-    return `${startTime} - ${endTime}`;
-  }
-
-  return startTime ?? endTime ?? EMPTY_NOTICE_VALUE;
+  return formatPlainTimeRange(activity.startsAt, activity.endsAt, EMPTY_NOTICE_VALUE);
 }
 
 export function filterNoticeStudents(

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { ActivityStatus } from "@/types/database";
+import { formatPlainTime } from "@/lib/plain-date-time";
 import type {
   TimelineActivity,
   TimelineCellActivity,
@@ -430,15 +431,7 @@ function formatDate(value: string | null) {
 }
 
 function formatTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat(TIMELINE_LOCALE, {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: TIMELINE_TIME_ZONE,
-  }).format(new Date(value));
+  return formatPlainTime(value);
 }
 
 function formatDateRangeLabel(columns: TimelineDateColumn[]) {

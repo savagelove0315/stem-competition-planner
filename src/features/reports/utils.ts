@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { buildConflictViewModel } from "@/features/conflicts/utils";
+import { formatPlainTime } from "@/lib/plain-date-time";
 import type { getReportsData } from "@/features/reports/queries";
 import type {
   ActivityScheduleReportRow,
@@ -620,10 +621,17 @@ export function formatDateTimeRange(startsAt: string | null, endsAt: string | nu
 
   const formatter = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-    timeStyle: "short",
   });
-  const startLabel = startsAt ? formatter.format(new Date(startsAt)) : null;
-  const endLabel = endsAt ? formatter.format(new Date(endsAt)) : null;
+  const startLabel = startsAt
+    ? [formatter.format(new Date(startsAt)), formatPlainTime(startsAt)]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+  const endLabel = endsAt
+    ? [formatter.format(new Date(endsAt)), formatPlainTime(endsAt)]
+        .filter(Boolean)
+        .join(", ")
+    : null;
 
   if (startLabel && endLabel) {
     return `${startLabel} - ${endLabel}`;

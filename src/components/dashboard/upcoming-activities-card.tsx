@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import type { UpcomingActivityOverview } from "@/features/dashboard/types";
+import { formatPlainTime } from "@/lib/plain-date-time";
 
 type UpcomingActivitiesCardProps = {
   activities: UpcomingActivityOverview[];
@@ -13,10 +14,12 @@ type UpcomingActivitiesCardProps = {
 };
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en", {
+  const date = new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-    timeStyle: "short",
   }).format(new Date(value));
+  const time = formatPlainTime(value);
+
+  return [date, time].filter(Boolean).join(", ");
 }
 
 function CompetitionBadge({ activity }: { activity: UpcomingActivityOverview }) {

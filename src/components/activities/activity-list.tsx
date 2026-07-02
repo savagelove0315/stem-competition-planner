@@ -32,6 +32,7 @@ import type {
   ActivityCompetitionOption,
   ActivityWithCompetition,
 } from "@/features/activities/queries";
+import { formatPlainTimeRange } from "@/lib/plain-date-time";
 import { cn } from "@/lib/utils";
 import type { ActivityStatus } from "@/types/database";
 
@@ -102,27 +103,8 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function formatTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "Asia/Kuching",
-  }).format(new Date(value));
-}
-
 function formatTimeRange(activity: ActivityWithCompetition) {
-  const startTime = formatTime(activity.startsAt);
-  const endTime = formatTime(activity.endsAt);
-
-  if (startTime && endTime) {
-    return `${startTime} - ${endTime}`;
-  }
-
-  return startTime ?? endTime;
+  return formatPlainTimeRange(activity.startsAt, activity.endsAt, "");
 }
 
 function StatusSubmitButton({

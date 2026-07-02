@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { formatPlainTimeRange } from "@/lib/plain-date-time";
 import type {
   StudentTimelineAssignment,
   StudentTimelineCellActivity,
@@ -320,25 +321,7 @@ function mapCellActivity(
 }
 
 function formatTimeRange(startsAt: string | null, endsAt: string | null) {
-  const startTime = formatTime(startsAt);
-  const endTime = formatTime(endsAt);
-
-  if (startTime && endTime) {
-    return `${startTime} - ${endTime}`;
-  }
-
-  return startTime ?? endTime;
-}
-
-function formatTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
+  return formatPlainTimeRange(startsAt, endsAt, "");
 }
 
 function formatDateRangeLabel(columns: StudentTimelineDateColumn[]) {
