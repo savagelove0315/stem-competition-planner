@@ -287,6 +287,157 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.competitionId} />
         </div>
 
+        {mode === "create" ? (
+          selectedCompetition ? (
+            <section className="grid gap-4 rounded-md border bg-background p-4 md:col-span-2">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <UsersRound
+                      className="size-4 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <h3 className="font-semibold">Assign participants</h3>
+                    <span className="rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {
+                        participationModeLabels[
+                          selectedCompetition.participationMode
+                        ]
+                      }
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Optional during creation. You can still adjust participants
+                    after the activity is saved.
+                  </p>
+                </div>
+                <span className="rounded-md border bg-muted px-2 py-1 text-xs font-medium">
+                  {selectedParticipantCount} selected
+                </span>
+              </div>
+
+              {showTeams ? (
+                <div className="grid gap-3">
+                  <h4 className="text-sm font-medium">Teams</h4>
+                  {activeTeams.length > 0 ? (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {activeTeams.map((team) => (
+                        <label
+                          key={team.id}
+                          className="grid cursor-pointer gap-2 rounded-md border p-3"
+                        >
+                          <span className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              name="teamIds"
+                              value={team.id}
+                              checked={selectedTeamIds.has(team.id)}
+                              onChange={(event) =>
+                                toggleSetValue(
+                                  team.id,
+                                  event.target.checked,
+                                  setSelectedTeamIds,
+                                )
+                              }
+                              className="mt-0.5 size-4 rounded border-input"
+                            />
+                            <span className="min-w-0">
+                              <span className="block break-words font-medium">
+                                {team.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {team.members.length} active member
+                                {team.members.length === 1 ? "" : "s"}
+                              </span>
+                            </span>
+                          </span>
+                          <details className="pl-7 text-xs text-muted-foreground">
+                            <summary className="cursor-pointer">Members</summary>
+                            {team.members.length > 0 ? (
+                              <ul className="mt-2 grid gap-1">
+                                {team.members.map((member) => (
+                                  <li key={member.id}>
+                                    {member.student?.name ?? "Unknown student"}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="mt-2">No active members.</p>
+                            )}
+                          </details>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                      No active teams are available for this competition.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {showIndividualStudents ? (
+                <div className="grid gap-3">
+                  <h4 className="text-sm font-medium">
+                    {selectedCompetition.participationMode === "individual"
+                      ? "Registered students"
+                      : "Individual / No team assigned"}
+                  </h4>
+                  {selectableIndividualEnrollments.length > 0 ? (
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {selectableIndividualEnrollments.map((enrollment) => (
+                        <label
+                          key={enrollment.id}
+                          className="flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2"
+                        >
+                          <input
+                            type="checkbox"
+                            name="studentIds"
+                            value={enrollment.studentId}
+                            checked={selectedStudentIds.has(
+                              enrollment.studentId,
+                            )}
+                            onChange={(event) =>
+                              toggleSetValue(
+                                enrollment.studentId,
+                                event.target.checked,
+                                setSelectedStudentIds,
+                              )
+                            }
+                            className="mt-0.5 size-4 rounded border-input"
+                          />
+                          <span className="min-w-0">
+                            <span className="block break-words font-medium">
+                              {enrollment.student?.name ?? "Unknown student"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {[
+                                enrollment.student?.className,
+                                enrollment.student?.gradeLevel,
+                              ]
+                                .filter(Boolean)
+                                .join(" / ") || "Registered student"}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                      No active registered students are available for this
+                      selection.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </section>
+          ) : (
+            <p className="rounded-md border border-dashed bg-background px-3 py-3 text-sm text-muted-foreground md:col-span-2">
+              Select a competition to assign students or teams.
+            </p>
+          )
+        ) : null}
+
         <div className="grid min-w-0 gap-2">
           <label
             className="text-sm font-medium"
@@ -453,141 +604,6 @@ export function ActivityForm({
           <FieldError errors={state.fieldErrors?.notes} />
         </div>
       </div>
-
-      {mode === "create" && selectedCompetition ? (
-        <section className="grid gap-4 rounded-md border bg-background p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <UsersRound
-                  className="size-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <h3 className="font-semibold">Assign participants</h3>
-                <span className="rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {participationModeLabels[selectedCompetition.participationMode]}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Optional during creation. You can still adjust participants after
-                the activity is saved.
-              </p>
-            </div>
-            <span className="rounded-md border bg-muted px-2 py-1 text-xs font-medium">
-              {selectedParticipantCount} selected
-            </span>
-          </div>
-
-          {showTeams ? (
-            <div className="grid gap-3">
-              <h4 className="text-sm font-medium">Teams</h4>
-              {activeTeams.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {activeTeams.map((team) => (
-                    <label
-                      key={team.id}
-                      className="grid cursor-pointer gap-2 rounded-md border p-3"
-                    >
-                      <span className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          name="teamIds"
-                          value={team.id}
-                          checked={selectedTeamIds.has(team.id)}
-                          onChange={(event) =>
-                            toggleSetValue(
-                              team.id,
-                              event.target.checked,
-                              setSelectedTeamIds,
-                            )
-                          }
-                          className="mt-0.5 size-4 rounded border-input"
-                        />
-                        <span className="min-w-0">
-                          <span className="block break-words font-medium">
-                            {team.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {team.members.length} active member
-                            {team.members.length === 1 ? "" : "s"}
-                          </span>
-                        </span>
-                      </span>
-                      <details className="pl-7 text-xs text-muted-foreground">
-                        <summary className="cursor-pointer">Members</summary>
-                        {team.members.length > 0 ? (
-                          <ul className="mt-2 grid gap-1">
-                            {team.members.map((member) => (
-                              <li key={member.id}>
-                                {member.student?.name ?? "Unknown student"}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="mt-2">No active members.</p>
-                        )}
-                      </details>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-                  No active teams are available for this competition.
-                </p>
-              )}
-            </div>
-          ) : null}
-
-          {showIndividualStudents ? (
-            <div className="grid gap-3">
-              <h4 className="text-sm font-medium">
-                {selectedCompetition.participationMode === "individual"
-                  ? "Registered students"
-                  : "Individual / No team assigned"}
-              </h4>
-              {selectableIndividualEnrollments.length > 0 ? (
-                <div className="grid gap-2 md:grid-cols-2">
-                  {selectableIndividualEnrollments.map((enrollment) => (
-                    <label
-                      key={enrollment.id}
-                      className="flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2"
-                    >
-                      <input
-                        type="checkbox"
-                        name="studentIds"
-                        value={enrollment.studentId}
-                        checked={selectedStudentIds.has(enrollment.studentId)}
-                        onChange={(event) =>
-                          toggleSetValue(
-                            enrollment.studentId,
-                            event.target.checked,
-                            setSelectedStudentIds,
-                          )
-                        }
-                        className="mt-0.5 size-4 rounded border-input"
-                      />
-                      <span className="min-w-0">
-                        <span className="block break-words font-medium">
-                          {enrollment.student?.name ?? "Unknown student"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {[enrollment.student?.className, enrollment.student?.gradeLevel]
-                            .filter(Boolean)
-                            .join(" / ") || "Registered student"}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
-                  No active registered students are available for this selection.
-                </p>
-              )}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
 
       {competitionOptions.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
