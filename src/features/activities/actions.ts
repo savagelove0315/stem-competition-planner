@@ -270,6 +270,19 @@ async function resolveCreateActivityParticipantIds(
   };
 }
 
+async function deleteNewActivityAfterParticipantFailure(
+  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  activityId: string,
+) {
+  const { error } = await supabase.from("activities").delete().eq("id", activityId);
+
+  if (error) {
+    throw new Error(
+      `Participant assignment failed, and the new activity could not be removed automatically: ${error.message}`,
+    );
+  }
+}
+
 function revalidateActivitySurfaces() {
   revalidatePath("/activities");
   revalidatePath("/student-timeline");
@@ -340,9 +353,12 @@ export async function createActivityAction(
         );
 
       if (participantError) {
+        await deleteNewActivityAfterParticipantFailure(supabase, activity.id);
+
         return {
           status: "error",
-          message: `Activity created, but participant assignment failed: ${participantError.message}`,
+          message:
+            "Activity was not saved because the selected participants could not be assigned. Please check the selected students or teams and try again.",
         };
       }
     }
