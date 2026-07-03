@@ -73,15 +73,15 @@ export function ConflictAlertsCard({
 
   return (
     <section className="min-w-0 rounded-lg border bg-card shadow-sm">
-      <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-md border border-teal-500/20 bg-teal-500/10 text-teal-700">
+            <span className="flex size-8 items-center justify-center rounded-md border border-teal-500/20 bg-teal-500/10 text-teal-700">
               <Radar className="size-4" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Conflict radar</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-base font-semibold">Conflict radar</h2>
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 Live schedule risks from existing conflict checks.
               </p>
             </div>
@@ -92,28 +92,28 @@ export function ConflictAlertsCard({
         </Button>
       </div>
 
-      <div className="grid gap-4 p-5">
-        <div className="grid gap-4 rounded-lg border bg-gradient-to-br from-slate-50 to-white p-4 sm:grid-cols-[auto_1fr]">
-          <div className="relative flex size-28 items-center justify-center rounded-full bg-emerald-500/10">
-            <div className="absolute size-24 rounded-full border border-emerald-500/20" />
-            <div className="absolute size-16 rounded-full border border-emerald-500/30 bg-emerald-500/10" />
+      <div className="grid gap-3 p-3">
+        <div className="grid gap-3 rounded-lg border bg-gradient-to-br from-slate-50 to-white p-3 sm:grid-cols-[auto_1fr]">
+          <div className="relative flex size-16 items-center justify-center rounded-full bg-emerald-500/10 sm:size-20">
+            <div className="absolute size-14 rounded-full border border-emerald-500/20 sm:size-16" />
+            <div className="absolute size-10 rounded-full border border-emerald-500/30 bg-emerald-500/10 sm:size-12" />
             <span
               className={cn(
-                "relative flex size-12 items-center justify-center rounded-full text-white shadow-sm",
+                "relative flex size-9 items-center justify-center rounded-full text-white shadow-sm sm:size-10",
                 seriousCount > 0 ? "bg-rose-600" : "bg-emerald-600",
               )}
             >
               {seriousCount > 0 ? (
-                <AlertCircle className="size-6" aria-hidden="true" />
+                <AlertCircle className="size-5" aria-hidden="true" />
               ) : (
-                <ShieldCheck className="size-6" aria-hidden="true" />
+                <ShieldCheck className="size-5" aria-hidden="true" />
               )}
             </span>
           </div>
           <div className="flex min-w-0 flex-col justify-center">
             <p
               className={cn(
-                "text-xl font-semibold",
+                "text-lg font-semibold",
                 seriousCount > 0 ? "text-rose-700" : "text-emerald-700",
               )}
             >
@@ -121,14 +121,14 @@ export function ConflictAlertsCard({
                 ? `${seriousCount} serious unresolved`
                 : "All clear"}
             </p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
               {hasConflicts
                 ? `${unresolvedCount} unresolved conflict${
                     unresolvedCount === 1 ? "" : "s"
                   } need review.`
                 : "No conflicts detected. Schedules are balanced."}
             </p>
-            <Button asChild size="sm" className="mt-4 w-fit">
+            <Button asChild size="sm" className="mt-3 w-fit">
               <Link href="/conflicts">Open conflict review</Link>
             </Button>
           </div>
@@ -139,9 +139,9 @@ export function ConflictAlertsCard({
             No unresolved conflicts are currently listed.
           </p>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-2.5">
           {conflicts.map((conflict) => (
-            <div key={conflict.id} className="grid gap-3 rounded-lg border p-3">
+            <div key={conflict.id} className="grid gap-2 rounded-lg border p-2.5">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="font-medium">{conflict.student.name}</h3>
                 <span className="text-sm text-muted-foreground">

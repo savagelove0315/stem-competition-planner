@@ -100,15 +100,15 @@ export function UpcomingActivitiesCard({
 
   return (
     <section className="min-w-0 rounded-lg border bg-card shadow-sm">
-      <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-md border border-blue-500/20 bg-blue-500/10 text-blue-700">
+            <span className="flex size-8 items-center justify-center rounded-md border border-blue-500/20 bg-blue-500/10 text-blue-700">
               <CalendarClock className="size-4" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Upcoming activities</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-base font-semibold">Upcoming activities</h2>
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 Next scheduled activities with participants.
               </p>
             </div>
@@ -131,7 +131,7 @@ export function UpcomingActivitiesCard({
           </Button>
         </div>
       ) : (
-        <div className="grid gap-3 p-4">
+        <div className="grid gap-2.5 p-3">
           {activities.map((activity) => {
             const isExpanded = expandedActivityIds.has(activity.id);
             const dateParts = formatPlainDateParts(activity.startsAt);
@@ -146,39 +146,39 @@ export function UpcomingActivitiesCard({
             return (
               <div
                 key={activity.id}
-                className="grid gap-3 rounded-lg border bg-gradient-to-r from-slate-50 to-white p-3 shadow-sm"
+                className="grid gap-2 rounded-lg border bg-gradient-to-r from-slate-50 to-white p-2.5 shadow-sm"
               >
                 <button
                   type="button"
-                  className="grid min-w-0 gap-3 text-left sm:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr_auto]"
+                  className="grid min-w-0 gap-2 text-left sm:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr_auto]"
                   aria-expanded={isExpanded}
                   onClick={() => toggleActivity(activity.id)}
                 >
-                  <span className="flex w-16 shrink-0 flex-col items-center justify-center rounded-md border bg-card px-2 py-2 shadow-sm">
+                  <span className="flex w-12 shrink-0 flex-col items-center justify-center rounded-md border bg-card px-1.5 py-1.5 shadow-sm">
                     <span className="text-[10px] font-semibold uppercase text-primary">
                       {dateParts.month}
                     </span>
-                    <span className="text-2xl font-semibold leading-none">
+                    <span className="text-xl font-semibold leading-none">
                       {dateParts.day}
                     </span>
                   </span>
 
-                  <span className="flex min-w-0 items-start gap-3">
-                    <span className="mt-1 text-muted-foreground" aria-hidden="true">
+                  <span className="flex min-w-0 items-start gap-2">
+                    <span className="mt-0.5 text-muted-foreground" aria-hidden="true">
                       {isExpanded ? (
                         <ChevronDown className="size-4" />
                       ) : (
                         <ChevronRight className="size-4" />
                       )}
                     </span>
-                    <span className="grid min-w-0 gap-2">
+                    <span className="grid min-w-0 gap-1.5">
                       <span className="flex min-w-0 flex-wrap items-center gap-2">
                         <span className="min-w-0 truncate font-semibold">
                           {activity.name}
                         </span>
                         <CompetitionBadge activity={activity} />
                       </span>
-                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground sm:text-sm">
                         {activity.activityType ? <span>{activity.activityType}</span> : null}
                         <span className="inline-flex items-center gap-1.5">
                           <Clock className="size-3.5" aria-hidden="true" />
@@ -188,18 +188,18 @@ export function UpcomingActivitiesCard({
                       </span>
                     </span>
                   </span>
-                  <span className="flex flex-wrap gap-2 text-xs sm:pl-[4.75rem] lg:pl-0">
-                    <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 font-medium capitalize text-emerald-700">
+                  <span className="flex flex-wrap gap-1.5 text-xs sm:pl-16 lg:pl-0">
+                    <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium capitalize text-emerald-700">
                       {activity.status}
                     </span>
-                    <span className="rounded-md border bg-card px-2 py-1 font-medium">
+                    <span className="rounded-md border bg-card px-2 py-0.5 font-medium">
                       {activity.participantCount} participants
                     </span>
                   </span>
                 </button>
 
                 {isExpanded ? (
-                  <div className="grid gap-3 rounded-md border bg-background p-4 sm:ml-20">
+                  <div className="grid gap-3 rounded-md border bg-background p-3 sm:ml-14">
                     {activity.teamGroups.length > 0 ? (
                       <div className="grid gap-3">
                         {activity.teamGroups.map((team) => (

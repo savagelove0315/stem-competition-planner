@@ -67,39 +67,41 @@ const cards = [
 
 export function DashboardSummaryCards({ summary }: DashboardSummaryCardsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
           <div
             key={card.key}
-            className="relative min-h-36 overflow-hidden rounded-lg border bg-card p-4 shadow-sm"
+            className="relative min-h-24 overflow-hidden rounded-lg border bg-card p-3 shadow-sm"
           >
             <div
               className={cn(
-                "absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent",
+                "absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t to-transparent",
                 card.glow,
               )}
               aria-hidden="true"
             />
-            <div className="relative flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-foreground">{card.label}</div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {card.helper}
-                </p>
-              </div>
+            <div className="relative flex items-start gap-2.5">
               <span
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-md border",
+                  "flex size-8 shrink-0 items-center justify-center rounded-md border",
                   card.accent,
                 )}
               >
                 <Icon className="size-4" aria-hidden="true" />
               </span>
+              <div className="min-w-0">
+                <div className="text-xs font-medium leading-4 text-foreground sm:text-sm">
+                  {card.label}
+                </div>
+                <p className="mt-0.5 hidden text-xs leading-4 text-muted-foreground sm:block">
+                  {card.helper}
+                </p>
+              </div>
             </div>
-            <div className="relative mt-4 text-3xl font-semibold tracking-normal text-slate-950">
+            <div className="relative mt-2 text-2xl font-semibold leading-none tracking-normal text-slate-950">
               {summary[card.key]}
             </div>
           </div>
