@@ -74,7 +74,7 @@ export function DashboardSummaryCards({ summary }: DashboardSummaryCardsProps) {
         return (
           <div
             key={card.key}
-            className="relative min-h-24 overflow-hidden rounded-lg border bg-card p-3 shadow-sm"
+            className="relative flex h-full min-h-24 flex-col overflow-hidden rounded-lg border bg-card p-3 shadow-sm"
           >
             <div
               className={cn(
@@ -101,7 +101,7 @@ export function DashboardSummaryCards({ summary }: DashboardSummaryCardsProps) {
                 </p>
               </div>
             </div>
-            <div className="relative mt-2 text-2xl font-semibold leading-none tracking-normal text-slate-950">
+            <div className="relative mt-auto pt-2 text-2xl font-semibold leading-none tracking-normal text-slate-950">
               {summary[card.key]}
             </div>
           </div>
