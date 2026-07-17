@@ -1,49 +1,13 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
+import {
+  AUTH_RECOVERY_REQUEST_HEADER,
+  classifySupabaseAuthError,
+} from "@/lib/auth/errors";
+import { getLoginRedirectPath } from "@/lib/auth/redirects";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function getSafeNextPath(nextPath: string): string {
-  if (
-    !nextPath.startsWith("/") ||
-    nextPath.startsWith("//") ||
-    nextPath.includes("\\")
-  ) {
-    return "/dashboard";
-  }
-
-  return nextPath;
-}
-
-function getLoginRedirectPath(
-  nextPath: string,
-  authError?: "auth_unreachable",
-): string {
-  const params = new URLSearchParams({
-    next: getSafeNextPath(nextPath),
-  });
-
-  if (authError) {
-    params.set("authError", authError);
-  }
-
-  return `/login?${params.toString()}`;
-}
-
-function getAuthErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown auth error";
-}
-
-function isAuthConnectivityError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  return (
-    error.name === "AuthRetryableFetchError" ||
-    error.message.toLowerCase() === "fetch failed"
-  );
-}
 
 export async function requireUser(nextPath = "/dashboard"): Promise<User> {
   const supabase = await createSupabaseServerClient();
@@ -59,15 +23,35 @@ export async function requireUser(nextPath = "/dashboard"): Promise<User> {
   }
 
   if (error && !(error instanceof Error && error.name === "AuthSessionMissingError")) {
-    if (isAuthConnectivityError(error)) {
+    const errorKind = classifySupabaseAuthError(error);
+
+    if (errorKind === "connectivity") {
       redirect(getLoginRedirectPath(nextPath, "auth_unreachable"));
     }
 
-    throw new Error(`Unable to verify the authenticated user: ${getAuthErrorMessage(error)}`);
+    if (errorKind === "service_unavailable") {
+      redirect(getLoginRedirectPath(nextPath, "auth_service_unavailable"));
+    }
+
+    if (errorKind === "session_expired") {
+      redirect(getLoginRedirectPath(nextPath, "session_expired"));
+    }
+
+    if (errorKind === "api_error") {
+      redirect(getLoginRedirectPath(nextPath, "auth_request_failed"));
+    }
+
+    throw new Error("Unable to verify the authenticated user.");
   }
 
   if (!user) {
-    redirect(getLoginRedirectPath(nextPath));
+    const authRecovery = (await headers()).get(AUTH_RECOVERY_REQUEST_HEADER);
+    redirect(
+      getLoginRedirectPath(
+        nextPath,
+        authRecovery === "session_expired" ? "session_expired" : undefined,
+      ),
+    );
   }
 
   return user;

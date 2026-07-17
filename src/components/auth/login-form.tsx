@@ -5,18 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { AlertCircle, Loader2, LogIn } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  getAuthErrorQueryMessage,
+  getSupabaseAuthUserMessage,
+} from "@/lib/auth/errors";
+import { getSafeAuthRedirectPath } from "@/lib/auth/redirects";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const AUTH_UNREACHABLE_MESSAGE =
-  "Unable to reach Supabase Auth. Please check your internet connection and try again.";
-
-function getSafeRedirectPath(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
-    return "/dashboard";
-  }
-
-  return value;
-}
 
 function hasSupabaseAuthCookie(): boolean {
   return document.cookie
@@ -27,8 +21,9 @@ function hasSupabaseAuthCookie(): boolean {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const authErrorMessage =
-    searchParams.get("authError") === "auth_unreachable" ? AUTH_UNREACHABLE_MESSAGE : null;
+  const authErrorMessage = getAuthErrorQueryMessage(
+    searchParams.get("authError"),
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +40,7 @@ export function LoginForm() {
     });
 
     if (loginError) {
-      setError(loginError.message);
+      setError(getSupabaseAuthUserMessage(loginError));
       setIsSubmitting(false);
       return;
     }
@@ -56,7 +51,11 @@ export function LoginForm() {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      setError(userError?.message ?? "Unable to confirm the signed-in user.");
+      setError(
+        userError
+          ? getSupabaseAuthUserMessage(userError)
+          : "Unable to confirm the signed-in user.",
+      );
       setIsSubmitting(false);
       return;
     }
@@ -67,7 +66,14 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign(getSafeRedirectPath(searchParams.get("next")));
+    const destination = new URL(
+      getSafeAuthRedirectPath(searchParams.get("next")),
+      window.location.origin,
+    );
+    destination.searchParams.delete("authError");
+    window.location.assign(
+      `${destination.pathname}${destination.search}${destination.hash}`,
+    );
   }
 
   return (
