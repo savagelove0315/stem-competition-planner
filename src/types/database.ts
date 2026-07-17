@@ -65,6 +65,7 @@ export type Competition = {
 export type Student = {
   id: UUID;
   studentCode: string | null;
+  myKidNumber: string | null;
   firstName: string;
   lastName: string;
   displayName: string | null;

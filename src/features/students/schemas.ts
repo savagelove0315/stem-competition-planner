@@ -15,6 +15,16 @@ function optionalLimitedText(max: number, message: string) {
     .transform((value) => (value.length > 0 ? value : null));
 }
 
+const optionalMyKidNumber = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[\s-]/g, ""))
+  .refine(
+    (value) => value.length === 0 || /^\d{12}$/.test(value),
+    "MyKid number must contain exactly 12 digits.",
+  )
+  .transform((value) => (value.length > 0 ? value : null));
+
 const optionalEmail = z
   .string()
   .trim()
@@ -26,6 +36,7 @@ export const studentFormSchema = z.object({
     64,
     "Student code must be 64 characters or fewer.",
   ),
+  myKidNumber: optionalMyKidNumber,
   firstName: z
     .string()
     .trim()
@@ -72,3 +83,25 @@ export const studentFormSchema = z.object({
 export const studentIdSchema = z.string().uuid("Invalid student id.");
 
 export type StudentFormValues = z.infer<typeof studentFormSchema>;
+
+export function isValidStoredMyKidNumber(
+  value: string | null | undefined,
+): value is string {
+  return typeof value === "string" && /^\d{12}$/.test(value);
+}
+
+export function formatMyKidNumber(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  if (!isValidStoredMyKidNumber(value)) {
+    return "Invalid saved value";
+  }
+
+  return `${value.slice(0, 6)}-${value.slice(6, 8)}-${value.slice(8)}`;
+}
+
+export function getMyKidFormValue(value: string | null | undefined) {
+  return isValidStoredMyKidNumber(value) ? formatMyKidNumber(value) : "";
+}

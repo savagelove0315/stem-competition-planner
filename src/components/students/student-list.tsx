@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   Archive,
   Eye,
   ListChecks,
+  Loader2,
   Pencil,
   Trash2,
   Users,
@@ -19,19 +20,50 @@ import { Button } from "@/components/ui/button";
 import {
   archiveStudentAction,
   deleteStudentAction,
+  getStudentDetailsAction,
   type StudentActionState,
 } from "@/features/students/actions";
+import { formatMyKidNumber } from "@/features/students/schemas";
 import type {
   StudentCompetitionOption,
+  StudentListItem,
   StudentWithCompetitions,
 } from "@/features/students/queries";
 import { cn } from "@/lib/utils";
 import type { StudentStatus } from "@/types/database";
 
 type StudentListProps = {
-  students: StudentWithCompetitions[];
+  students: StudentListItem[];
   competitionOptions: StudentCompetitionOption[];
 };
+
+type StudentDetailsMode = "profile" | "edit";
+
+type StudentDetailsDialogState =
+  | {
+      mode: StudentDetailsMode;
+      studentId: string;
+      studentName: string;
+      status: "loading";
+      student: null;
+      message: null;
+    }
+  | {
+      mode: StudentDetailsMode;
+      studentId: string;
+      studentName: string;
+      status: "error";
+      student: null;
+      message: string;
+    }
+  | {
+      mode: StudentDetailsMode;
+      studentId: string;
+      studentName: string;
+      status: "success";
+      student: StudentWithCompetitions;
+      message: null;
+    };
 
 const initialArchiveState: StudentActionState = {
   status: "idle",
@@ -53,18 +85,18 @@ function EmptyMetadata() {
   return <span className="text-muted-foreground">Not set</span>;
 }
 
-function getStudentName(student: StudentWithCompetitions) {
+function getStudentName(student: StudentListItem) {
   return (
     student.displayName ??
     [student.firstName, student.lastName].filter(Boolean).join(" ")
   );
 }
 
-function getStudentFullName(student: StudentWithCompetitions) {
+function getStudentFullName(student: StudentListItem) {
   return [student.firstName, student.lastName].filter(Boolean).join(" ");
 }
 
-function getStudentSecondaryDetails(student: StudentWithCompetitions) {
+function getStudentSecondaryDetails(student: StudentListItem) {
   const details = [
     student.className ? `Class ${student.className}` : null,
     student.gradeLevel ? `Grade ${student.gradeLevel}` : null,
@@ -85,7 +117,7 @@ function ArchiveSubmitButton({ disabled }: { disabled: boolean }) {
   );
 }
 
-function ArchiveStudentForm({ student }: { student: StudentWithCompetitions }) {
+function ArchiveStudentForm({ student }: { student: StudentListItem }) {
   const [state, formAction] = useActionState(
     archiveStudentAction,
     initialArchiveState,
@@ -120,7 +152,7 @@ function DeleteSubmitButton() {
   );
 }
 
-function DeleteStudentForm({ student }: { student: StudentWithCompetitions }) {
+function DeleteStudentForm({ student }: { student: StudentListItem }) {
   const [state, formAction] = useActionState(
     deleteStudentAction,
     initialDeleteState,
@@ -197,7 +229,7 @@ function StudentProfileSection({
 function CompetitionBadges({
   student,
 }: {
-  student: StudentWithCompetitions;
+  student: StudentListItem;
 }) {
   if (student.competitionAssignments.length === 0) {
     return <span className="text-sm text-muted-foreground">None assigned</span>;
@@ -226,6 +258,87 @@ function CompetitionBadges({
           </span>
         </span>
       ))}
+    </div>
+  );
+}
+
+function StudentDetailsStatusModal({
+  mode,
+  studentName,
+  status,
+  message,
+  onRetry,
+  onClose,
+}: {
+  mode: StudentDetailsMode;
+  studentName: string;
+  status: "loading" | "error";
+  message: string | null;
+  onRetry: () => void;
+  onClose: () => void;
+}) {
+  const title = mode === "profile" ? "Student profile" : "Edit student";
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default bg-background/80"
+        aria-label={`Close ${title.toLowerCase()} dialog`}
+        onClick={onClose}
+      />
+      <div
+        aria-labelledby="student-details-status-title"
+        aria-modal="true"
+        className="absolute left-1/2 top-1/2 flex w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border bg-background shadow-lg"
+        role="dialog"
+      >
+        <div className="flex items-start justify-between gap-4 border-b px-4 py-4 sm:px-6">
+          <div className="min-w-0">
+            <h2
+              id="student-details-status-title"
+              className="text-lg font-semibold"
+            >
+              {title}
+            </h2>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              {studentName}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Close ${title.toLowerCase()} dialog`}
+            onClick={onClose}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+
+        <div className="grid min-h-36 place-items-center gap-4 px-6 py-8 text-center">
+          {status === "loading" ? (
+            <>
+              <Loader2
+                className="size-6 animate-spin text-primary"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                Loading student details...
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-destructive" role="alert">
+                {message}
+              </p>
+              <Button type="button" variant="outline" onClick={onRetry}>
+                Try Again
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -288,6 +401,10 @@ function StudentProfileModal({
               value={getStudentFullName(student)}
             />
             <ProfileField label="Student code" value={student.studentCode} />
+            <ProfileField
+              label="MyKid number"
+              value={formatMyKidNumber(student.myKidNumber)}
+            />
             <ProfileField label="Class" value={student.className} />
             <ProfileField label="Grade / Year" value={student.gradeLevel} />
             <ProfileField
@@ -354,22 +471,91 @@ export function StudentList({
   students,
   competitionOptions,
 }: StudentListProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const editingStudent =
-    students.find((student) => student.id === editingId) ?? null;
-  const profileStudent =
-    students.find((student) => student.id === profileId) ?? null;
+  const [detailsDialog, setDetailsDialog] =
+    useState<StudentDetailsDialogState | null>(null);
+  const detailRequestSequence = useRef(0);
+  const pendingDetailRequest = useRef<string | null>(null);
+
+  async function openStudentDetails(
+    student: StudentListItem,
+    mode: StudentDetailsMode,
+  ) {
+    const requestKey = `${mode}:${student.id}`;
+
+    if (pendingDetailRequest.current === requestKey) {
+      return;
+    }
+
+    const requestSequence = ++detailRequestSequence.current;
+    pendingDetailRequest.current = requestKey;
+    setDetailsDialog({
+      mode,
+      studentId: student.id,
+      studentName: getStudentName(student),
+      status: "loading",
+      student: null,
+      message: null,
+    });
+
+    try {
+      const result = await getStudentDetailsAction(student.id);
+
+      if (detailRequestSequence.current !== requestSequence) {
+        return;
+      }
+
+      if (result.status === "success") {
+        setDetailsDialog({
+          mode,
+          studentId: student.id,
+          studentName: getStudentName(result.student),
+          status: "success",
+          student: result.student,
+          message: null,
+        });
+        return;
+      }
+
+      setDetailsDialog({
+        mode,
+        studentId: student.id,
+        studentName: getStudentName(student),
+        status: "error",
+        student: null,
+        message: result.message,
+      });
+    } catch {
+      if (detailRequestSequence.current === requestSequence) {
+        setDetailsDialog({
+          mode,
+          studentId: student.id,
+          studentName: getStudentName(student),
+          status: "error",
+          student: null,
+          message: "Unable to load student details. Please try again.",
+        });
+      }
+    } finally {
+      if (pendingDetailRequest.current === requestKey) {
+        pendingDetailRequest.current = null;
+      }
+    }
+  }
+
+  function closeStudentDetails() {
+    detailRequestSequence.current += 1;
+    pendingDetailRequest.current = null;
+    setDetailsDialog(null);
+  }
 
   useEffect(() => {
-    if (!editingStudent && !profileStudent) {
+    if (!detailsDialog) {
       return;
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setEditingId(null);
-        setProfileId(null);
+        closeStudentDetails();
       }
     }
 
@@ -380,7 +566,7 @@ export function StudentList({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editingStudent, profileStudent]);
+  }, [detailsDialog]);
 
   if (students.length === 0) {
     return (
@@ -494,7 +680,7 @@ export function StudentList({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setProfileId(student.id)}
+                      onClick={() => void openStudentDetails(student, "profile")}
                     >
                       <Eye aria-hidden="true" />
                       View Profile
@@ -503,7 +689,7 @@ export function StudentList({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingId(student.id)}
+                      onClick={() => void openStudentDetails(student, "edit")}
                     >
                       <Pencil aria-hidden="true" />
                       Edit
@@ -530,20 +716,42 @@ export function StudentList({
         </div>
       </section>
 
-      {profileStudent ? (
-        <StudentProfileModal
-          student={profileStudent}
-          onClose={() => setProfileId(null)}
+      {detailsDialog?.status === "loading" ||
+      detailsDialog?.status === "error" ? (
+        <StudentDetailsStatusModal
+          mode={detailsDialog.mode}
+          studentName={detailsDialog.studentName}
+          status={detailsDialog.status}
+          message={detailsDialog.message}
+          onRetry={() => {
+            const student = students.find(
+              (candidate) => candidate.id === detailsDialog.studentId,
+            );
+
+            if (student) {
+              void openStudentDetails(student, detailsDialog.mode);
+            }
+          }}
+          onClose={closeStudentDetails}
         />
       ) : null}
 
-      {editingStudent ? (
+      {detailsDialog?.status === "success" &&
+      detailsDialog.mode === "profile" ? (
+        <StudentProfileModal
+          student={detailsDialog.student}
+          onClose={closeStudentDetails}
+        />
+      ) : null}
+
+      {detailsDialog?.status === "success" &&
+      detailsDialog.mode === "edit" ? (
         <div className="fixed inset-0 z-50">
           <button
             type="button"
             className="absolute inset-0 cursor-default bg-background/80"
             aria-label="Close edit student dialog"
-            onClick={() => setEditingId(null)}
+            onClick={closeStudentDetails}
           />
           <div
             aria-labelledby="edit-student-title"
@@ -557,7 +765,7 @@ export function StudentList({
                   Edit student
                 </h2>
                 <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {getStudentName(editingStudent)}
+                  {getStudentName(detailsDialog.student)}
                 </p>
               </div>
               <Button
@@ -565,7 +773,7 @@ export function StudentList({
                 variant="ghost"
                 size="icon"
                 aria-label="Close edit student dialog"
-                onClick={() => setEditingId(null)}
+                onClick={closeStudentDetails}
               >
                 <X aria-hidden="true" />
               </Button>
@@ -573,9 +781,9 @@ export function StudentList({
             <div className="overflow-y-auto px-4 py-5 sm:px-6">
               <StudentForm
                 mode="edit"
-                student={editingStudent}
+                student={detailsDialog.student}
                 competitionOptions={competitionOptions}
-                onCancel={() => setEditingId(null)}
+                onCancel={closeStudentDetails}
                 showHeader={false}
                 surface="plain"
               />

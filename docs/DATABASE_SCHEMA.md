@@ -21,6 +21,7 @@ supabase/migrations/004_add_student_profile_fields.sql
 supabase/migrations/010_add_competition_notice_fields.sql
 supabase/migrations/012_add_team_management_safety.sql
 supabase/migrations/014_add_competition_participation_mode.sql
+supabase/migrations/016_add_student_mykid_number.sql
 ```
 
 Migration `003_add_competition_metadata.sql` adds generic competition display and grouping metadata used by planner UI surfaces. These fields remain data-driven and do not encode fixed competition names.
@@ -37,6 +38,13 @@ active members cannot be deleted.
 Migration `014_add_competition_participation_mode.sql` adds a generic
 `participation_mode` field to competitions so individual, team, and mixed
 participation workflows can be selected per competition record.
+
+Migration `016_add_student_mykid_number.sql` adds an optional text
+`mykid_number` field to student profiles for authorised student management
+views. A check constraint permits only `NULL` or exactly 12 ASCII digits. It
+is added safely for a manually created column: new and changed rows are
+enforced immediately, and the whole table is validated automatically when no
+malformed legacy values exist.
 
 ## Tables
 
@@ -98,6 +106,7 @@ Key columns:
 
 - `id uuid primary key`
 - `student_code text`
+- `mykid_number text`
 - `first_name text`
 - `last_name text`
 - `display_name text`
@@ -116,6 +125,7 @@ Key columns:
 Profile columns:
 
 - `student_code` is an optional stable student identifier or school-issued student code.
+- `mykid_number` stores an optional MyKid identifier as text so leading zeroes are preserved. The database permits only `NULL` or exactly 12 ASCII digits.
 - `class_name` is an optional class, homeroom, section, or cohort label for filtering and reports.
 - `grade_level` is an optional grade, year, or level for filtering, timeline grouping, reports, and conflict review.
 - `parent_contact` is an optional parent or guardian contact field for coordinator follow-up.

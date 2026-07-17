@@ -88,12 +88,13 @@ not encode any named competition as a special case.
 Student school profile fields live on `students` because they describe the student independently of any competition.
 
 - `student_code` stores an optional stable student identifier or school-issued code.
+- `mykid_number` stores an optional MyKid identifier as text constrained to exactly 12 ASCII digits when present. It is sensitive personal information and should only be fetched for authorised student profile or edit views.
 - `class_name` stores an optional class, homeroom, section, or cohort label.
 - `grade_level` stores an optional grade, year, or level.
 - `parent_contact` stores optional parent or guardian contact details for coordinator follow-up.
 - `notes` stores internal notes or remarks.
 
-Class, grade/year, and parent contact should not be squeezed into `student_code`. Competition membership still belongs in `student_competitions`, not in profile columns.
+Class, grade/year, parent contact, and MyKid number should not be squeezed into `student_code`. Competition membership still belongs in `student_competitions`, not in profile columns.
 
 ## Activity Participation
 

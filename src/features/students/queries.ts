@@ -8,7 +8,7 @@ import type {
   StudentStatus,
 } from "@/types/database";
 
-type StudentRow = {
+type StudentListRow = {
   id: string;
   student_code: string | null;
   first_name: string;
@@ -26,6 +26,10 @@ type StudentRow = {
   created_at: string;
   updated_at: string;
   student_competitions: StudentCompetitionJoinRow[] | null;
+};
+
+type StudentDetailRow = StudentListRow & {
+  mykid_number: string | null;
 };
 
 type StudentCompetitionJoinRow = {
@@ -80,6 +84,10 @@ export type StudentWithCompetitions = Student & {
   competitionAssignments: StudentCompetitionAssignment[];
 };
 
+export type StudentListItem = Omit<Student, "myKidNumber"> & {
+  competitionAssignments: StudentCompetitionAssignment[];
+};
+
 export type StudentCompetitionOption = Pick<
   Competition,
   "id" | "name" | "shortName" | "color" | "status"
@@ -109,7 +117,7 @@ function mapCompetition(row: CompetitionRow): Competition {
   };
 }
 
-function mapStudent(row: StudentRow): StudentWithCompetitions {
+function mapStudentListItem(row: StudentListRow): StudentListItem {
   return {
     id: row.id,
     studentCode: row.student_code,
@@ -151,7 +159,14 @@ function mapStudent(row: StudentRow): StudentWithCompetitions {
   };
 }
 
-export async function listStudents(): Promise<StudentWithCompetitions[]> {
+function mapStudentDetails(row: StudentDetailRow): StudentWithCompetitions {
+  return {
+    ...mapStudentListItem(row),
+    myKidNumber: row.mykid_number,
+  };
+}
+
+export async function listStudents(): Promise<StudentListItem[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("students")
@@ -214,7 +229,78 @@ export async function listStudents(): Promise<StudentWithCompetitions[]> {
     throw new Error(`Unable to load students: ${error.message}`);
   }
 
-  return ((data ?? []) as unknown as StudentRow[]).map(mapStudent);
+  return ((data ?? []) as unknown as StudentListRow[]).map(mapStudentListItem);
+}
+
+export async function getStudentDetailsById(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  studentId: string,
+): Promise<StudentWithCompetitions | null> {
+  const { data, error } = await supabase
+    .from("students")
+    .select(
+      `
+        id,
+        student_code,
+        mykid_number,
+        first_name,
+        last_name,
+        display_name,
+        class_name,
+        grade_level,
+        email,
+        phone,
+        guardian_name,
+        guardian_contact,
+        parent_contact,
+        status,
+        notes,
+        created_at,
+        updated_at,
+        student_competitions (
+          id,
+          student_id,
+          competition_id,
+          status,
+          registered_at,
+          withdrawn_at,
+          notes,
+          created_at,
+          updated_at,
+          competitions (
+            id,
+            name,
+            short_name,
+            color,
+            icon,
+            category,
+            notice_mode,
+            notice_period,
+            participation_mode,
+            description,
+            status,
+            starts_at,
+            ends_at,
+            registration_opens_at,
+            registration_closes_at,
+            lead_teacher_id,
+            notes,
+            created_at,
+            updated_at
+          )
+        )
+      `,
+    )
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("Unable to load student details.");
+  }
+
+  return data
+    ? mapStudentDetails(data as unknown as StudentDetailRow)
+    : null;
 }
 
 export async function listStudentCompetitionOptions(): Promise<

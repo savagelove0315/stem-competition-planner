@@ -10,7 +10,11 @@ import {
   updateStudentAction,
   type StudentActionState,
 } from "@/features/students/actions";
-import { studentStatuses } from "@/features/students/schemas";
+import {
+  getMyKidFormValue,
+  isValidStoredMyKidNumber,
+  studentStatuses,
+} from "@/features/students/schemas";
 import type {
   StudentCompetitionOption,
   StudentWithCompetitions,
@@ -69,6 +73,7 @@ export function StudentForm({
   surface = "card",
 }: StudentFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const submissionInFlightRef = useRef(false);
   const action = mode === "create" ? createStudentAction : updateStudentAction;
   const [state, formAction] = useActionState(action, initialState);
   const selectedCompetitionIds = new Set(
@@ -78,15 +83,29 @@ export function StudentForm({
   );
 
   useEffect(() => {
+    submissionInFlightRef.current = false;
+
     if (mode === "create" && state.status === "success") {
       formRef.current?.reset();
     }
-  }, [mode, state.status]);
+  }, [mode, state]);
+
+  const hasInvalidStoredMyKid =
+    Boolean(student?.myKidNumber) &&
+    !isValidStoredMyKidNumber(student?.myKidNumber);
 
   return (
     <form
       ref={formRef}
       action={formAction}
+      onSubmit={(event) => {
+        if (submissionInFlightRef.current) {
+          event.preventDefault();
+          return;
+        }
+
+        submissionInFlightRef.current = true;
+      }}
       className={cn(
         "grid w-full gap-5",
         surface === "card" && "rounded-lg border bg-card p-5 shadow-sm",
@@ -156,6 +175,28 @@ export function StudentForm({
             className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           />
           <FieldError errors={state.fieldErrors?.studentCode} />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-sm font-medium" htmlFor={`${mode}-myKidNumber`}>
+            MyKid number
+          </label>
+          <input
+            id={`${mode}-myKidNumber`}
+            name="myKidNumber"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            defaultValue={getMyKidFormValue(student?.myKidNumber)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <FieldError errors={state.fieldErrors?.myKidNumber} />
+          {hasInvalidStoredMyKid ? (
+            <p className="text-xs text-destructive">
+              The saved MyKid value is invalid. Enter a valid 12-digit number
+              to replace it.
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-2">

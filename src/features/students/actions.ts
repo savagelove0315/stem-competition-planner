@@ -3,8 +3,15 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  requireAuthenticatedClient,
+  type AuthenticatedSupabaseClient,
+} from "@/lib/auth/require-authenticated-client";
 
+import {
+  getStudentDetailsById,
+  type StudentWithCompetitions,
+} from "./queries";
 import {
   studentFormSchema,
   studentIdSchema,
@@ -16,6 +23,10 @@ export type StudentActionState = {
   message: string | null;
   fieldErrors?: Partial<Record<keyof StudentFormValues, string[]>>;
 };
+
+export type StudentDetailsActionResult =
+  | { status: "success"; student: StudentWithCompetitions; message: null }
+  | { status: "error"; student: null; message: string };
 
 const initialErrorState: StudentActionState = {
   status: "error",
@@ -39,6 +50,7 @@ function optionalTextValue(value: string | null): string | null {
 function readStudentForm(formData: FormData) {
   return studentFormSchema.safeParse({
     studentCode: getFormValue(formData, "studentCode"),
+    myKidNumber: getFormValue(formData, "myKidNumber"),
     firstName: getFormValue(formData, "firstName"),
     lastName: getFormValue(formData, "lastName"),
     displayName: getFormValue(formData, "displayName"),
@@ -57,23 +69,10 @@ function readStudentForm(formData: FormData) {
   });
 }
 
-async function requireAuthenticatedClient() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error("You must be signed in to manage students.");
-  }
-
-  return supabase;
-}
-
 function toStudentPayload(values: StudentFormValues) {
   return {
     student_code: optionalTextValue(values.studentCode),
+    mykid_number: values.myKidNumber,
     first_name: values.firstName,
     last_name: values.lastName,
     display_name: optionalTextValue(values.displayName),
@@ -120,7 +119,7 @@ function formatStudentMutationError(
 }
 
 async function syncStudentCompetitions(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  supabase: AuthenticatedSupabaseClient["supabase"],
   studentId: string,
   competitionIds: string[],
 ): Promise<StudentCompetitionSyncError | null> {
@@ -188,7 +187,7 @@ async function syncStudentCompetitions(
 }
 
 async function getStudentDeleteSafety(
-  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  supabase: AuthenticatedSupabaseClient["supabase"],
   studentId: string,
 ): Promise<StudentDeleteSafety> {
   const [
@@ -264,7 +263,7 @@ function getStudentDeleteBlockedMessage({
 }
 
 async function deleteInactiveStudentJoins(
-  supabase: Awaited<ReturnType<typeof requireAuthenticatedClient>>,
+  supabase: AuthenticatedSupabaseClient["supabase"],
   studentId: string,
 ) {
   const [cancelledParticipants, withdrawnCompetitions, inactiveTeamMembers] =
@@ -308,6 +307,34 @@ function revalidateStudentSurfaces() {
   revalidatePath("/dashboard");
 }
 
+export async function getStudentDetailsAction(
+  studentId: string,
+): Promise<StudentDetailsActionResult> {
+  const id = studentIdSchema.safeParse(studentId);
+
+  if (!id.success) {
+    return { status: "error", student: null, message: "Invalid student id." };
+  }
+
+  const { supabase } = await requireAuthenticatedClient("/students");
+
+  try {
+    const student = await getStudentDetailsById(supabase, id.data);
+
+    if (!student) {
+      return { status: "error", student: null, message: "Student not found." };
+    }
+
+    return { status: "success", student, message: null };
+  } catch {
+    return {
+      status: "error",
+      student: null,
+      message: "Unable to load student details. Please refresh and try again.",
+    };
+  }
+}
+
 export async function createStudentAction(
   _previousState: StudentActionState,
   formData: FormData,
@@ -321,8 +348,9 @@ export async function createStudentAction(
     };
   }
 
+  const { supabase } = await requireAuthenticatedClient("/students");
+
   try {
-    const supabase = await requireAuthenticatedClient();
     const studentId = randomUUID();
     const { error } = await supabase
       .from("students")
@@ -378,8 +406,9 @@ export async function updateStudentAction(
     };
   }
 
+  const { supabase } = await requireAuthenticatedClient("/students");
+
   try {
-    const supabase = await requireAuthenticatedClient();
     const { error } = await supabase
       .from("students")
       .update(toStudentPayload(parsed.data))
@@ -426,8 +455,9 @@ export async function archiveStudentAction(
     return { status: "error", message: "Invalid student id." };
   }
 
+  const { supabase } = await requireAuthenticatedClient("/students");
+
   try {
-    const supabase = await requireAuthenticatedClient();
     const { error } = await supabase
       .from("students")
       .update({ status: "archived" })
@@ -461,8 +491,9 @@ export async function deleteStudentAction(
     return { status: "error", message: "Invalid student id." };
   }
 
+  const { supabase } = await requireAuthenticatedClient("/students");
+
   try {
-    const supabase = await requireAuthenticatedClient();
     const deleteSafety = await getStudentDeleteSafety(supabase, id.data);
     const blockedMessage = getStudentDeleteBlockedMessage(deleteSafety);
 
